@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.10)
+project(mycs)
+set(CMAKE_CXX_STANDARD 17)
+
+set(Libs "")
+
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+	add_definitions(-DCS_DEBUG)
+	find_package(GTest CONFIG REQUIRED)
+	set(Libs "${Libs};GTest::gmock;GTest::gtest;GTest::gmock_main;GTest::gtest_main")
+endif ()
+
+find_package(fmt CONFIG REQUIRED)
+set(Libs "${Libs};fmt::fmt")
+
+function(cs_link_libs name)
+	target_link_libraries(${name} PUBLIC ${Libs})
+endfunction()
+
+add_subdirectory(./leetcode)
+add_subdirectory(./cs)
