@@ -12,7 +12,7 @@ std::uniform_int_distribution<> uniform_dist(INT32_MIN, INT32_MAX);
 }  // namespace
 
 template <typename K, typename V, typename Hash = std::hash<K>, typename Equal = std::equal_to<K>, size_t InitCap = 12>
-class Map {
+class HashMap {
    public:
 	class Node;
 	typedef LinkedList<Node*> List;
@@ -20,7 +20,7 @@ class Map {
 
 	class Node {
 	   private:
-		friend class Map<K, V, Hash, Equal, InitCap>;
+		friend class HashMap<K, V, Hash, Equal, InitCap>;
 
 		K _key;
 		V _val;
@@ -36,12 +36,10 @@ class Map {
 		V& val() { return _val; }
 
 		const V& val() const { return _val; }
-
-		Node& operator=(const V& v) { _val = v; }
 	};
 
    private:
-	typedef Map<K, V, Hash, Equal, InitCap> ThisType;
+	typedef HashMap<K, V, Hash, Equal, InitCap> ThisType;
 	typedef typename List::Iterator ListIter;
 
 	Data* data = nullptr;
@@ -187,15 +185,15 @@ class Map {
 	typedef BaseIterator<true> ConstIterator;
 	typedef BaseIterator<false> Iterator;
 
-	Map() { init(); };
+	HashMap() { init(); };
 
-	explicit Map(int load_factor) {
+	explicit HashMap(int load_factor) {
 		if (load_factor < 20) load_factor = 20;
 		this->factor = load_factor;
 		init();
 	}
 
-	virtual ~Map() {
+	virtual ~HashMap() {
 		if (data == nullptr) return;
 		for (auto list : *data) {
 			if (list == nullptr) continue;
@@ -276,13 +274,13 @@ class Map {
 	V& at(const K& key) {
 		FindResult result = find(key);
 		if (result.ok) return *result.ptr;
-		throw std::runtime_error(fmt::format("cs.Map: missing key `{}`", key));
+		throw std::runtime_error(fmt::format("cs.HashMap: missing key `{}`", key));
 	}
 
 	const V& at(const K& key) const {
 		ConstFindResult result = find(key);
 		if (result.ok) return *result.ptr;
-		throw std::runtime_error(fmt::format("cs.Map: missing key `{}`", key));
+		throw std::runtime_error(fmt::format("cs.HashMap: missing key `{}`", key));
 	}
 
 	[[nodiscard]] bool empty() const { return _size == 0; }
@@ -397,7 +395,7 @@ class Map {
 	const V& operator[](const K& key) const {
 		ConstFindResult result = find(key);
 		if (result.ok) return *result.ptr;
-		throw new std::runtime_error(fmt::format("cs.Map: missing key `{}`", key));
+		throw new std::runtime_error(fmt::format("cs.HashMap: missing key `{}`", key));
 	}
 };
 

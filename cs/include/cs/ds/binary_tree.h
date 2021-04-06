@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common/index.h"
+#include "./stack.h"
 
 namespace cs {
 
@@ -9,9 +10,9 @@ class BinaryTree {
    protected:
 	class Node;
 
-	typedef std::function<void(Node*)> VisitorFunc;
-	typedef std::function<void(const Node*)> ConstVisitorFunc;
-	typedef std::pair<Node*, Node*> FindResult;
+	typedef std::function<void(Node*)> NodeVisitorFunc;
+	typedef std::function<void(const Node*)> NodeConstVisitorFunc;
+	typedef std::function<void(const T&)> VisitorFunc;
 
 	class Node {
 	   protected:
@@ -28,31 +29,31 @@ class BinaryTree {
 
 		~Node() = default;
 
-		void pre_order(const VisitorFunc& func) {
+		void pre_order(const NodeVisitorFunc& func) {
 			func(this);
 			if (left != nullptr) left->pre_order(func);
 			if (right != nullptr) right->pre_order(func);
 		}
 
-		void in_order(const VisitorFunc& func) {
+		void in_order(const NodeVisitorFunc& func) {
 			if (left != nullptr) left->in_order(func);
 			func(this);
 			if (right != nullptr) right->in_order(func);
 		}
 
-		void post_order(const VisitorFunc& func) {
+		void post_order(const NodeVisitorFunc& func) {
 			if (left != nullptr) left->post_order(func);
 			if (right != nullptr) right->post_order(func);
 			func(this);
 		}
 
-		void pre_order(const ConstVisitorFunc& func) const {
+		void pre_order(const NodeConstVisitorFunc& func) const {
 			func(this);
 			if (left != nullptr) left->pre_order(func);
 			if (right != nullptr) right->pre_order(func);
 		}
 
-		void range(const ConstVisitorFunc& func, const T& min, const T& max) const {
+		void range(const NodeConstVisitorFunc& func, const T& min, const T& max) const {
 			Less less;
 
 			if (less(min, val) && left != nullptr) left->range(func, min, max);
@@ -65,13 +66,13 @@ class BinaryTree {
 			if (less(val, max) && right != nullptr) right->range(func, min, max);
 		}
 
-		void in_order(const ConstVisitorFunc& func) const {
+		void in_order(const NodeConstVisitorFunc& func) const {
 			if (left != nullptr) left->in_order(func);
 			func(this);
 			if (right != nullptr) right->in_order(func);
 		}
 
-		void post_order(const ConstVisitorFunc& func) const {
+		void post_order(const NodeConstVisitorFunc& func) const {
 			if (left != nullptr) left->post_order(func);
 			if (right != nullptr) right->post_order(func);
 			func(this);
@@ -114,9 +115,6 @@ class BinaryTree {
 
 	virtual Node* newNode(const T& v) { return new Node(v); }
 
-	// append不是Node的方法，可以省很多事。
-	// 静态方法操作的话。node可以为空，而且也不需要知道parent，少了很多判断
-	// 其次，avl做平衡时也需要修改节点结构
 	virtual Node* do_append(Node* node, const T& v) {
 		if (node == nullptr) {
 			_size++;
@@ -150,7 +148,11 @@ class BinaryTree {
 					nearest->right = node->right;
 				} else {
 					// has left and left has right
-					nearestParent->replace_child(nearest, nearest->left);
+					if (nearestParent->left == nearest) {
+						nearestParent->left = nearest->left;
+					} else {
+						nearest->right = nearest->left;
+					}
 					nearest->left = node->left;
 					nearest->right = node->right;
 				}
@@ -195,9 +197,62 @@ class BinaryTree {
 	}
 
 	template <typename SeqContainer>
-	void range(SeqContainer& seq, const T& min, const T& max) const {
+	void range(SeqContainer& seq, const T& left, const T& right) const {
 		if (root == nullptr) return;
-		root->range([&seq](const Node* node) { seq.push_back(node->val); }, min, max);
+		root->range([&seq](const Node* node) { seq.push_back(node->val); }, left, right);
+	}
+
+	void each(const VisitorFunc& func) {
+		if (empty()) return;
+
+		Stack<Node*> stack;
+		stack.reserve(_size / 2);
+
+		Node* cursor = root;
+		size_t count = 0;
+
+		while (count != _size) {
+			while (cursor != nullptr) {
+				stack.push(cursor);
+				cursor = cursor->left;
+			}
+
+			while (!stack.empty()) {
+				cursor = stack.pop();
+				func(cursor->val);
+				count++;
+				if (cursor->right != nullptr) {
+					cursor = cursor->right;
+					break;
+				}
+			}
+		}
+	}
+
+	bool empty() { return _size == 0; }
+
+	size_t size() { return _size; }
+
+	const T& farleft() {
+		if (empty()) throw std::runtime_error("cs.BinaryTree: empty tree");
+		auto cursor = root;
+		while (cursor != nullptr) {
+			if (cursor->left == nullptr) {
+				return cursor->val;
+			}
+			cursor = cursor->left;
+		}
+	}
+
+	const T& farright() {
+		if (empty()) throw std::runtime_error("cs.BinaryTree: empty tree");
+		auto cursor = root;
+		while (cursor != nullptr) {
+			if (cursor->right == nullptr) {
+				return cursor->val;
+			}
+			cursor = cursor->right;
+		}
 	}
 };
 

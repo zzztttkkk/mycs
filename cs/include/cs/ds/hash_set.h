@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../common/index.h"
-#include "./map.h"
+#include "./hash_map.h"
 
 namespace cs {
 
@@ -10,9 +10,9 @@ struct SetV {};
 }  // namespace
 
 template <typename T, typename Hash = std::hash<T>, typename Equal = std::equal_to<T>, size_t InitCap = 12>
-class Set {
+class HashSet {
    private:
-	typedef Map<T, SetV, Hash, Equal, InitCap> MapT;
+	typedef HashMap<T, SetV, Hash, Equal, InitCap> MapT;
 	MapT* map = nullptr;
 
    public:
@@ -42,8 +42,8 @@ class Set {
 		}
 	};
 
-	Set() = default;
-	virtual ~Set() { delete map; }
+	HashSet() = default;
+	virtual ~HashSet() { delete map; }
 
 	size_t size() { return map == nullptr ? 0 : map->size(); }
 

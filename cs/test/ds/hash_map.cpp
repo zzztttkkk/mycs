@@ -6,7 +6,7 @@ using namespace cs;
 using namespace std;
 
 int f1() {
-	Map<int, int> map;
+	HashMap<int, int> map;
 
 	for (int i = 0; i < 10000; ++i) {
 		map.set(i, i * i);
@@ -16,7 +16,7 @@ int f1() {
 }
 
 void f2() {
-	Map<int, int> map(100);
+	HashMap<int, int> map(100);
 	for (int i = 0; i < 10; ++i) {
 		map.set(i, i * i);
 	}

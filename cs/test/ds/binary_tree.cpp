@@ -52,6 +52,7 @@ TEST(BinaryTree, Range) {
 			}
 		}
 		vector<int> rangeData;
+		rangeData.reserve(rangeDataSet.size());
 		for (auto item : rangeDataSet) {
 			rangeData.push_back(item);
 		}
@@ -64,6 +65,15 @@ TEST(BinaryTree, Range) {
 			ASSERT_EQ(rangeData[i], drray[i]);
 		}
 	}
+}
+
+TEST(BinaryTree, InOrder) {
+	BinaryTree<int> tree;
+	for (int i = 0; i < 10; ++i) {
+		tree.append(cs::rand());
+	}
+
+	tree.each([](int v) { fprint("{}\r\n", v); });
 }
 
 TestMain
