@@ -20,9 +20,14 @@ void f2() {
 	for (int i = 0; i < 10; ++i) {
 		map.set(i, i * i);
 	}
-	fprint("{}\r\n", map[3] + 10);
+	FMT("{}\r\n", map[3] + 10);
 	for (auto item : map) {
-		fprint("{} {}\r\n", item->key(), item->val());
+		FMT("{} {}\r\n", item->key(), item->val());
+	}
+
+	const auto& cf = map;
+	for (auto item: cf) {
+		FMT("{} {}\r\n", item->key(), item->val());
 	}
 }
 

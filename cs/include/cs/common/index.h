@@ -25,13 +25,13 @@
 
 namespace cs {
 
-#ifndef fprint
+#ifndef FMT
 #ifdef _MSC_VER
-#define fprint(f, ...) fmt::print(f, __VA_ARGS__)
+#define FMT(f, ...) fmt::print(f, __VA_ARGS__)
 #else
-#define fprint(f, args...) fmt::print(f, ##args)
+#define FMT(f, args...) fmt::print(f, ##args)
 #endif
-#endif	// fprint
+#endif	// FMT
 
 int rand();
 

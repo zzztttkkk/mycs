@@ -12,7 +12,7 @@ int main() {
 		ll.push_front(i);
 	}
 	for (auto item : ll) {
-		fprint("{}\r\n", item);
+		FMT("{}\r\n", item);
 	}
 	return 0;
 }

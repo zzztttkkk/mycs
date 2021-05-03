@@ -10,14 +10,11 @@ int main() {
 	for (int i = 0; i < 10; ++i) {
 		set.add(i);
 	}
-	fprint("Size: {}\r\n", set.size());
-	for (auto item : set) {
-		fprint("{}\r\n", item);
-	}
+	FMT("Size: {}\r\n", set.size());
 
-	const HashSet<int>& cSet = set;
+	const auto& cSet = set;
 	for (auto item : cSet) {
-		fprint("{}\r\n", item);
+		FMT("{}\r\n", item);
 	}
 	return 0;
 }

@@ -1,6 +1,4 @@
 #include <cs.h>
-#include <vector>
-#include <iostream>
 
 using namespace std;
 using namespace cs;
@@ -12,10 +10,10 @@ int main() {
 		stack.push(i);
 	}
 
-	fprint("Top: {}\n", stack.top());
+	FMT("Top: {}\n", stack.top());
 
 	while (!stack.empty()) {
-		fprint("{}\n", stack.pop());
+		FMT("{}\n", stack.pop());
 	}
 
 	return 0;

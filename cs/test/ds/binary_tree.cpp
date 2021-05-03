@@ -73,7 +73,7 @@ TEST(BinaryTree, InOrder) {
 		tree.append(cs::rand());
 	}
 
-	tree.each([](int v) { fprint("{}\r\n", v); });
+	tree.each([](int v) { FMT("{}\r\n", v); });
 }
 
 TestMain

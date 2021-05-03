@@ -3,30 +3,27 @@
 #include "../common/index.h"
 #include "./drray.h"
 #include "./linkedlist.h"
+#include <ctime>
 
 namespace cs {
 
-namespace {
-std::random_device randomDevice;
-std::uniform_int_distribution<> uniform_dist(INT32_MIN, INT32_MAX);
-}  // namespace
-
-template <typename K, typename V, typename Hash = std::hash<K>, typename Equal = std::equal_to<K>, size_t InitCap = 12>
+template<typename K, typename V, typename Hash = std::hash<K>, typename Equal = std::equal_to<K>, size_t InitCap = 12>
 class HashMap {
-   public:
+public:
 	class Node;
+
 	typedef LinkedList<Node*> List;
 	typedef Drray<List*> Data;
 
 	class Node {
-	   private:
+	private:
 		friend class HashMap<K, V, Hash, Equal, InitCap>;
 
 		K _key;
 		V _val;
 		size_t hash;
 
-	   public:
+	public:
 		Node(const K& k, const V& v, size_t h) : _key(k), _val(v), hash(h) {}
 
 		virtual ~Node() = default;
@@ -38,7 +35,7 @@ class HashMap {
 		const V& val() const { return _val; }
 	};
 
-   private:
+private:
 	typedef HashMap<K, V, Hash, Equal, InitCap> ThisType;
 	typedef typename List::Iterator ListIter;
 
@@ -114,13 +111,16 @@ class HashMap {
 	}
 
 	void init() {
+		static std::random_device srd;
+		static std::uniform_int_distribution<> distribution(INT32_MIN, INT32_MAX);
+		static std::mt19937 mt19937(static_cast<unsigned int>(distribution(srd)));
 		// the same keys are kept in a different order in different maps
-		this->seed = uniform_dist(randomDevice);
+		this->seed = distribution(mt19937);
 	}
 
-	template <bool IsConst>
+	template<bool IsConst>
 	class BaseIterator {
-	   protected:
+	protected:
 		ThisType* map = nullptr;
 		size_t ind = 0;
 		ListIter li;
@@ -149,8 +149,9 @@ class HashMap {
 			ok = true;
 		}
 
-	   public:
+	public:
 		BaseIterator(ThisType* m, size_t i) : map(m), ind(i) {}
+
 		~BaseIterator() = default;
 
 		BaseIterator& operator++() {
@@ -160,28 +161,20 @@ class HashMap {
 
 		bool operator!=(const BaseIterator& other) const { return this->ind != other.ind; }
 
-		template <bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
-		const Node* operator*() {
-			return *(li);
-		}
+		template<bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
+		const Node* operator*() { return *(li); }
 
-		template <bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
-		const Node* operator->() {
-			return *(li);
-		}
+		template<bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
+		const Node* operator->() { return *(li); }
 
-		template <bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
-		Node* operator*() {
-			return *(li);
-		}
+		template<bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
+		Node* operator*() { return *(li); }
 
-		template <bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
-		Node* operator->() {
-			return *(li);
-		}
+		template<bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
+		Node* operator->() { return *(li); }
 	};
 
-   public:
+public:
 	typedef BaseIterator<true> ConstIterator;
 	typedef BaseIterator<false> Iterator;
 
@@ -208,7 +201,7 @@ class HashMap {
 	bool empty() { return _size == 0; }
 
 	struct SetResult {
-	   public:
+	public:
 		bool updated;
 		V old_val;
 	};
@@ -234,7 +227,7 @@ class HashMap {
 	}
 
 	struct FindResult {
-	   public:
+	public:
 		bool ok = false;
 		V* ptr = nullptr;
 	};
@@ -253,7 +246,7 @@ class HashMap {
 	}
 
 	struct ConstFindResult {
-	   public:
+	public:
 		bool ok = false;
 		V* ptr = nullptr;
 	};
@@ -337,7 +330,7 @@ class HashMap {
 		}
 	}
 
-	template <typename SeqContainer>
+	template<typename SeqContainer>
 	void keys_to(SeqContainer& seq) const {
 		keys([&seq](const K& key) -> bool {
 			seq.push_back(key);
@@ -357,7 +350,7 @@ class HashMap {
 		}
 	}
 
-	template <typename SeqContainer>
+	template<typename SeqContainer>
 	void values_to(SeqContainer& seq) const {
 		values([&seq](const V& val) -> bool {
 			seq.push_back(val);
@@ -377,12 +370,12 @@ class HashMap {
 
 	ConstIterator begin() const {
 		if (empty()) return end();
-		return ++ConstIterator(this, 0);
+		return ++ConstIterator(const_cast<ThisType*>(this), 0);
 	}
 
 	ConstIterator end() const {
 		if (this->data == nullptr) return ConstIterator(nullptr, 0);
-		return ConstIterator(this, this->data->size());
+		return ConstIterator(const_cast<ThisType*>(this), this->data->size());
 	}
 
 	V& operator[](const K& key) {
@@ -395,7 +388,7 @@ class HashMap {
 	const V& operator[](const K& key) const {
 		ConstFindResult result = find(key);
 		if (result.ok) return *result.ptr;
-		throw new std::runtime_error(fmt::format("cs.HashMap: missing key `{}`", key));
+		throw std::runtime_error(fmt::format("cs.HashMap: missing key `{}`", key));
 	}
 };
 
