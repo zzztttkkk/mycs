@@ -25,6 +25,5 @@ function(cs_link_libs name)
 	target_link_libraries(${name} PUBLIC ${Libs})
 endfunction()
 
-add_subdirectory(./leetcode)
 add_subdirectory(./cs)
 

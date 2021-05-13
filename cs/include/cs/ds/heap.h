@@ -4,15 +4,17 @@
 
 namespace cs {
 
-template <typename T, size_t InitCap = 6, typename Cmp = std::less<T>>
+template<typename T, uint8_t N = 2, size_t InitCap = 6, typename Cmp = std::less<T>>
 class Heap : public Drray<T, InitCap> {
-   private:
-	void go_up() {
+private:
+	static_assert(N > 1, "cs:Heap: N > 1");
+
+	virtual void go_up() {
 		size_t ind = this->_size - 1;
 		Cmp cmp;
 
 		while (ind != 0) {
-			auto pInd = (ind - 1) / 2;
+			auto pInd = (ind - 1) / N;
 			T& a = this->_ptr[ind];
 			T& b = this->_ptr[pInd];
 			if (cmp(a, b)) {
@@ -24,40 +26,39 @@ class Heap : public Drray<T, InitCap> {
 		}
 	}
 
-	void go_down() {
+	virtual void go_down() {
 		size_t ind = 0;
 		Cmp cmp;
 
 		while (ind < this->_size) {
-			auto lInd = ind * 2 + 1;
-			if (lInd >= this->_size) {
+			auto lowInd = ind * N + 1;
+			if (lowInd >= this->_size) {
 				return;
 			}
-			T& lV = this->_ptr[lInd];
 
-			size_t mInd = lInd;
-			T* mVP = &lV;
-
-			auto rInd = ind * 2 + 2;
-			if (rInd < this->_size) {
-				T& rV = this->_ptr[rInd];
-				if (!cmp(lV, rV)) {
-					mInd = rInd;
-					mVP = &rV;
+			T* minVP = this->_ptr + lowInd;
+			auto minIdx = lowInd;
+			for (auto j = lowInd + 1; j < lowInd + N; j++) {
+				if (j >= this->_size) {
+					break;
+				}
+				if (cmp(this->_ptr[j], *minVP)) {
+					minVP = this->_ptr + j;
+					minIdx = j;
 				}
 			}
+
 			T& cV = this->_ptr[ind];
-			if (cmp(*mVP, cV)) {
-				std::swap(*mVP, cV);
-				ind = mInd;
-				continue;
+			if (cmp(cV, *minVP)) {
+				return;
 			}
-			return;
+			std::swap(cV, *minVP);
+			ind = minIdx;
 		}
 	}
 
-   public:
-	Heap() {}
+public:
+	Heap() = default;
 
 	virtual ~Heap() = default;
 
@@ -89,6 +90,12 @@ class Heap : public Drray<T, InitCap> {
 		}
 		delete[] ptr;
 	}
+
+	static inline size_t p_idx(size_t idx) { return (idx - 1) / N; }
+
+	static inline size_t low_c_idx(size_t idx) { return idx * N + 1; }
+
+	static inline size_t high_c_idx(size_t idx) { return (idx + 1) * N; }
 };
 
 }  // namespace cs

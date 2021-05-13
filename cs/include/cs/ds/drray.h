@@ -4,18 +4,18 @@
 
 namespace cs {
 
-template <typename T, size_t InitCap = 6>
+template<typename T, size_t InitCap = 6>
 class Drray {
 	static_assert(InitCap > 0, "cs.ds.Drray: Zero InitCap");
 
-   private:
-	template <bool IsConst>
+private:
+	template<bool IsConst>
 	class BaseIterator {
-	   private:
+	private:
 		T* ptr;
 
-	   public:
-		explicit BaseIterator(T* p) : ptr(p){};
+	public:
+		explicit BaseIterator(T* p) : ptr(p) {};
 
 		virtual ~BaseIterator() = default;
 
@@ -31,34 +31,34 @@ class Drray {
 
 		bool operator!=(const BaseIterator& other) const { return ptr != other.ptr; }
 
-		template <bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
+		template<bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
 		const T& operator*() {
 			return *ptr;
 		}
 
-		template <bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
+		template<bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
 		const T* operator->() {
 			return ptr;
 		}
 
-		template <bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
+		template<bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
 		T& operator*() {
 			return *ptr;
 		}
 
-		template <bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
+		template<bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
 		T* operator->() {
 			return ptr;
 		}
 	};
 
-   public:
+public:
 	typedef std::function<bool(size_t, T&)> VisitorFunc;
 	typedef std::function<bool(size_t, const T&)> ConstVisitorFunc;
 	typedef BaseIterator<true> ConstIterator;
 	typedef BaseIterator<false> Iterator;
 
-   protected:
+protected:
 	T* _ptr = nullptr;
 	size_t _size = 0;
 	size_t _cap = 0;
@@ -97,7 +97,7 @@ class Drray {
 		allocate(_size + 1);
 	}
 
-   public:
+public:
 	Drray() = default;
 
 	virtual ~Drray() {
@@ -181,7 +181,7 @@ class Drray {
 		_ptr[_size++] = val;
 	}
 
-	template <typename SeqContainer>
+	template<typename SeqContainer>
 	void copy_to(SeqContainer& seq) const {
 		each([&seq](size_t i, const T& v) -> bool {
 			seq.push_back(v);
@@ -189,13 +189,13 @@ class Drray {
 		});
 	}
 
-	template <typename SeqContainer>
+	template<typename SeqContainer>
 	void copy_from(const SeqContainer& seq) {
 		for (auto item : seq) push_back(item);
 	}
 
 #define CsDrrayCheckIndex \
-	if (index >= _size) throw std::runtime_error("cs.Drray: out of range")
+    if (index >= _size) throw std::runtime_error("cs.Drray: out of range")
 
 	T& at(size_t index) {
 		CsDrrayCheckIndex;
@@ -291,7 +291,7 @@ class Drray {
 
 #undef CsDrrayCheckIndex
 
-	template <typename Cmp = std::less<T>>
+	template<typename Cmp = std::less<T>>
 	static bool is_sorted(const Drray<T, InitCap>& drray) {
 		if (drray.empty()) return true;
 		T* prev;
@@ -311,7 +311,7 @@ class Drray {
 	}
 
 	static void print_to(const Drray<T, InitCap>& drray, std::ostream& output) {
-		output << fmt::format("Drray<{}, size: {}>: ", (void*)(const_cast<Drray<T, InitCap>*>(&drray)), drray.size());
+		output << fmt::format("Drray<{}, size: {}>: ", (void*) (const_cast<Drray<T, InitCap>*>(&drray)), drray.size());
 		for (auto item : drray) {
 			output << fmt::format("{}, ", item);
 		}

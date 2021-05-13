@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../common/index.h"
-#include "./hash_map.h"
+#include "./hash_table.h"
 
 namespace cs {
 
@@ -13,20 +13,20 @@ struct SetV {
 template<typename T, typename Hash = std::hash<T>, typename Equal = std::equal_to<T>, size_t InitCap = 12>
 class HashSet {
 private:
-	typedef HashMap <T, SetV, Hash, Equal, InitCap> MapT;
+	typedef HashTable <T, SetV, Hash, Equal, InitCap> MapT;
 	MapT* map = nullptr;
 
 public:
-	class Iterator {
+	class ConstIterator {
 	private:
 		typename MapT::ConstIterator mi;
 
 	public:
-		explicit Iterator(typename MapT::ConstIterator&& m) : mi(m) {}
+		explicit ConstIterator(typename MapT::ConstIterator&& m) : mi(m) {}
 
-		~Iterator() = default;
+		~ConstIterator() = default;
 
-		Iterator& operator++() {
+		ConstIterator& operator++() {
 			++mi;
 			return *this;
 		}
@@ -36,7 +36,7 @@ public:
 			return node->key();
 		}
 
-		bool operator!=(const Iterator& other) const { return this->mi != other.mi; }
+		bool operator!=(const ConstIterator& other) const { return this->mi != other.mi; }
 	};
 
 	HashSet() = default;
@@ -62,9 +62,9 @@ public:
 		return map->get(val).updated;
 	}
 
-	Iterator begin() const { return Iterator(const_cast<const MapT*>(map)->begin()); }
+	ConstIterator begin() const { return ConstIterator(const_cast<const MapT*>(map)->begin()); }
 
-	Iterator end() const { return Iterator(const_cast<const MapT*>(map)->end()); }
+	ConstIterator end() const { return ConstIterator(const_cast<const MapT*>(map)->end()); }
 };
 
 }  // namespace cs

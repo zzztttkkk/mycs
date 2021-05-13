@@ -8,7 +8,7 @@
 namespace cs {
 
 template<typename K, typename V, typename Hash = std::hash<K>, typename Equal = std::equal_to<K>, size_t InitCap = 12>
-class HashMap {
+class HashTable {
 public:
 	class Node;
 
@@ -17,7 +17,7 @@ public:
 
 	class Node {
 	private:
-		friend class HashMap<K, V, Hash, Equal, InitCap>;
+		friend class HashTable<K, V, Hash, Equal, InitCap>;
 
 		K _key;
 		V _val;
@@ -36,7 +36,7 @@ public:
 	};
 
 private:
-	typedef HashMap<K, V, Hash, Equal, InitCap> ThisType;
+	typedef HashTable<K, V, Hash, Equal, InitCap> ThisType;
 	typedef typename List::Iterator ListIter;
 
 	Data* data = nullptr;
@@ -62,7 +62,7 @@ private:
 		delete oldData;
 	}
 
-	Node* _find(const K& key, size_t hv) const {
+	Node* do_find(const K& key, size_t hv) const {
 		if (empty()) return nullptr;
 
 		Equal equal;
@@ -93,21 +93,14 @@ private:
 		list->push_back(node);
 	}
 
-	Node* set(const K& key, const V& val, V* old_val_ptr, bool* is_update) {
-		size_t hash_val = calc_hash(key);
-		Node* node = _find(key, hash_val);
-		if (node != nullptr) {
-			*old_val_ptr = node->_val;
-			*is_update = true;
-			node->_val = val;
-			return node;
-		}
 
-		*is_update = false;
-		node = new Node(key, val, hash_val);
-		append_node(node);
-		_size++;
-		return node;
+	std::optional<std::reference_wrapper<V>> _find(const K& key) {
+		auto hV = calc_hash(key);
+		Node* node = do_find(key, hV);
+		if (node == nullptr) {
+			return {};
+		}
+		return node->_val;
 	}
 
 	void init() {
@@ -177,16 +170,18 @@ private:
 public:
 	typedef BaseIterator<true> ConstIterator;
 	typedef BaseIterator<false> Iterator;
+	typedef std::optional<const std::reference_wrapper<V>> ConstValRefOptional;
+	typedef std::optional<std::reference_wrapper<V>> ValRefOptional;
 
-	HashMap() { init(); };
+	HashTable() { init(); };
 
-	explicit HashMap(int load_factor) {
+	explicit HashTable(int load_factor) {
 		if (load_factor < 20) load_factor = 20;
 		this->factor = load_factor;
 		init();
 	}
 
-	virtual ~HashMap() {
+	virtual ~HashTable() {
 		if (data == nullptr) return;
 		for (auto list : *data) {
 			if (list == nullptr) continue;
@@ -200,101 +195,76 @@ public:
 
 	bool empty() { return _size == 0; }
 
-	struct SetResult {
-	public:
-		bool updated;
-		V old_val;
-	};
-
-	SetResult set(const K& key, const V& val) {
-		SetResult result;
-		set(key, val, &result.old_val, &result.updated);
-		return result;
+	std::optional<V> set(const K& key, const V& val) {
+		size_t hash_val = calc_hash(key);
+		Node* node = do_find(key, hash_val);
+		if (node != nullptr) {
+			V old_val = node->_val;
+			node->_val = val;
+			return {old_val};
+		}
+		node = new Node(key, val, hash_val);
+		append_node(node);
+		_size++;
+		return {};
 	}
 
-	SetResult update_only(const K& key, const V& val) {
-		SetResult result;
+	std::optional<V> replace(const K& key, const V& val) {
 		size_t hV = calc_hash(key);
-		Node* node = find(key, hV);
+		Node* node = do_find(key, hV);
 		if (node == nullptr) {
-			result.updated = false;
-			return result;
+			return {};
 		}
-		result.updated = true;
-		result.old_val = node->_val;
+		V old_val = node->_val;
 		node->_val = val;
-		return result;
+		return old_val;
 	}
 
-	struct FindResult {
-	public:
-		bool ok = false;
-		V* ptr = nullptr;
-	};
+	inline ValRefOptional find(const K& key) {
+		return _find(key);
+	}
 
-	FindResult find(const K& key) {
-		FindResult result;
-		auto hV = calc_hash(key);
-		Node* node = _find(key, hV);
-		if (node == nullptr) {
-			result.ok = false;
-			return result;
+	ConstValRefOptional find(const K& key) const {
+		ValRefOptional&& opt = const_cast<ThisType*>(this)->_find(key);
+		if (opt.has_value()) {
+			return opt.value();
 		}
-		result.ok = true;
-		result.ptr = &node->_val;
-		return result;
+		return {};
 	}
 
-	struct ConstFindResult {
-	public:
-		bool ok = false;
-		V* ptr = nullptr;
-	};
+	[[nodiscard]] inline bool empty() const { return _size == 0; }
 
-	ConstFindResult find(const K& key) const {
-		ConstFindResult result;
-		auto hV = calc_hash(key);
-		Node* node = find(key, hV);
-		if (node == nullptr) {
-			result.ok = false;
-			return result;
-		}
-		result.ok = true;
-		result.ptr = &node->_val;
-		return result;
-	}
+	bool contains(const K& key) { return find(key, calc_hash(key)).has_value(); }
 
 	V& at(const K& key) {
-		FindResult result = find(key);
-		if (result.ok) return *result.ptr;
-		throw std::runtime_error(fmt::format("cs.HashMap: missing key `{}`", key));
+		auto opt = find(key);
+		if (opt.has_value()) {
+			return opt.value();
+		}
+		throw std::runtime_error("cs.HashTable: missing key");
 	}
 
 	const V& at(const K& key) const {
-		ConstFindResult result = find(key);
-		if (result.ok) return *result.ptr;
-		throw std::runtime_error(fmt::format("cs.HashMap: missing key `{}`", key));
+		auto opt = find(key);
+		if (opt.has_value()) {
+			return opt.value();
+		}
+		throw std::runtime_error("cs.HashTable: missing key");
 	}
 
-	[[nodiscard]] bool empty() const { return _size == 0; }
-
-	bool contains(const K& key) { return find(key, calc_hash(key)) != nullptr; }
-
-	SetResult del(const K& key) {
-		SetResult result;
-		result.updated = false;
-
-		if (empty()) return result;
+	std::optional<V> del(const K& key) {
+		if (empty()) return {};
 
 		auto hV = calc_hash(key);
 		List* list = data->at(hV % data->cap());
-		if (list == nullptr) return result;
+		if (list == nullptr) return {};
+
+		V val;
 		if (list->remove_if(
-				[&key, &result](auto node) -> bool {
+				[&key, &val](auto node) -> bool {
 					bool e = Equal{}(node->_key, key);
 					if (e) {
-						result.updated = true;
-						result.old_val = node->_val;
+						val = node->_val;
 						delete node;
 					}
 					return e;
@@ -302,8 +272,7 @@ public:
 				1) == 1) {
 			_size--;
 		}
-
-		return result;
+		return val;
 	}
 
 	typedef std::function<bool(const K& key, const V& val)> ItemVisitorFunc;
@@ -330,14 +299,6 @@ public:
 		}
 	}
 
-	template<typename SeqContainer>
-	void keys_to(SeqContainer& seq) const {
-		keys([&seq](const K& key) -> bool {
-			seq.push_back(key);
-			return true;
-		});
-	}
-
 	typedef std::function<bool(const V& val)> ValVisitorFunc;
 
 	void values(const ValVisitorFunc& func) const {
@@ -348,14 +309,6 @@ public:
 				if (!func(node->_val)) return;
 			}
 		}
-	}
-
-	template<typename SeqContainer>
-	void values_to(SeqContainer& seq) const {
-		values([&seq](const V& val) -> bool {
-			seq.push_back(val);
-			return true;
-		});
 	}
 
 	Iterator begin() {
@@ -378,18 +331,9 @@ public:
 		return ConstIterator(const_cast<ThisType*>(this), this->data->size());
 	}
 
-	V& operator[](const K& key) {
-		FindResult findResult = find(key);
-		if (findResult.ok) return *findResult.ptr;
-		SetResult setResult;
-		return set(key, V{}, &setResult.old_val, &setResult.updated)->_val;
-	}
+	inline V& operator[](const K& key) { return at(key); }
 
-	const V& operator[](const K& key) const {
-		ConstFindResult result = find(key);
-		if (result.ok) return *result.ptr;
-		throw std::runtime_error(fmt::format("cs.HashMap: missing key `{}`", key));
-	}
+	inline const V& operator[](const K& key) const { return at(key); }
 };
 
 }  // namespace cs

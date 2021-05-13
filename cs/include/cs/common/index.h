@@ -3,12 +3,12 @@
 #ifdef CS_DEBUG
 
 #define TestMain                              \
-	int main(int argc, char** argv) {         \
-		testing::InitGoogleTest(&argc, argv); \
-		return RUN_ALL_TESTS();               \
-	}
+    int main(int argc, char** argv) {         \
+        testing::InitGoogleTest(&argc, argv); \
+        return RUN_ALL_TESTS();               \
+    }
 
-#endif	// CS_DEBUG
+#endif    // CS_DEBUG
 
 #include <fmt/core.h>
 
@@ -31,14 +31,14 @@ namespace cs {
 #else
 #define FMT(f, args...) fmt::print(f, ##args)
 #endif
-#endif	// FMT
+#endif    // FMT
 
 int rand();
 
 int rand(int min, int max);
 
 // detect mem-leak directly
-template <typename Callable, typename Clock = std::chrono::system_clock>
+template<typename Callable, typename Clock = std::chrono::system_clock>
 void run(const Callable& callable, std::chrono::duration<double> duration = std::chrono::minutes(5)) {
 	auto begin = Clock::now();
 	auto count = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
@@ -51,7 +51,7 @@ void run(const Callable& callable, std::chrono::duration<double> duration = std:
 	}
 }
 
-template <typename T>
+template<typename T>
 struct Comparator {
 	constexpr int operator()(const T& a, const T& b) {
 		if (std::equal_to<T>{}(a, b)) {
@@ -63,5 +63,7 @@ struct Comparator {
 		return 1;
 	}
 };
+
+#define now std::chrono::system_clock::now
 
 }  // namespace cs

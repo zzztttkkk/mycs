@@ -6,11 +6,12 @@
 using namespace std;
 using namespace cs;
 
-TEST(Heap, PushAndPop) {
+TEST(NHeap, PushAndPop) {
+	auto begin = now();
 	for (int k = 0; k < 10000; ++k) {
-		Heap<int> heap;
+		Heap<int, 4> heap;
 		vector<int> data;
-		for (int i = 0; i < 10; ++i) {
+		for (int i = 0; i < 100; ++i) {
 			int v = cs::rand();
 			heap.push_back(v);
 			data.push_back(v);
@@ -23,6 +24,7 @@ TEST(Heap, PushAndPop) {
 			ind++;
 		}
 	}
+	FMT("{}\r\n", (now() - begin).count());
 }
 
 TestMain

@@ -5,17 +5,20 @@
 
 namespace cs {
 
-template <typename T, typename Less = std::less<T>, typename Equal = std::equal_to<T>>
+template<typename T, typename Less = std::less<T>, typename Equal = std::equal_to<T>>
 class AVLBinaryTree : public BinaryTree<T, Less, Equal> {
-   private:
+private:
 	typedef BinaryTree<T, Less, Equal> BaseTree;
 	typedef typename BaseTree::Node BaseNode;
 
 	class Node : public BaseNode {
-	   private:
+	private:
 		BaseNode* newNode(const T& v) { return new Node(v); }
-#define L dynamic_cast<Node*>(this->left)
-#define R dynamic_cast<Node*>(this->right)
+
+#define TBN(n) dynamic_cast<BaseNode*>(n)
+#define TCN(n) dynamic_cast<Node*>(n)
+#define L TCN(this->left)
+#define R TCN(this->right)
 
 		int height() {
 			if (L == nullptr && R == nullptr) return 0;
@@ -31,23 +34,32 @@ class AVLBinaryTree : public BinaryTree<T, Less, Equal> {
 			return L->height() - R->height();
 		}
 
-		void append(const T& v) {
-			BaseNode::append(v);
-			switch (factor()) {
-				case -2:
-					break;
-				case 2:
-					break;
-			}
-		}
-
-	   public:
+	public:
 		explicit Node(const T& v) : BaseNode(v) {}
 	};
 
-	Node* newNode(const T& v) { return new Node(v); }
+	Node* do_rotate(Node* node) {
+		switch (node->factor()) {
+			case -2:
+				break;
+			case 2:
+				break;
+			default:
+				return node;
+		}
+	}
 
-   public:
+	BaseNode* newNode(const T& v) { return new Node(v); }
+
+	BaseNode* do_append(BaseNode* _node, const T& v) override {
+		BaseNode* root = BaseTree::do_append(_node, v);
+		return do_rotate(TCN(root));
+	}
+
+public:
+
+#undef TBN
+#undef TCN
 #undef L
 #undef R
 };
