@@ -65,8 +65,6 @@ class LinkedList {
 	};
 
    public:
-	typedef std::function<bool(size_t, T&)> VisitorFunc;
-	typedef std::function<bool(size_t, const T&)> ConstVisitorFunc;
 	typedef BaseIterator<true> ConstIterator;
 	typedef BaseIterator<false> Iterator;
 
@@ -165,13 +163,14 @@ class LinkedList {
 		return val;
 	}
 
-	typedef std::function<bool(const T&)> RemoveIfFunc;
+	typedef std::function<bool(size_t idx, const T&)> RemoveIfFunc;
 
 	int remove_if(const RemoveIfFunc& func, int count) {
 		auto cursor = _head;
 		int v = 0;
+		size_t idx = 0;
 		while (cursor != nullptr && count != 0) {
-			if (func(cursor->val)) {
+			if (func(idx, cursor->val)) {
 				auto ptr = cursor;
 				cursor = cursor->next;
 				remove_node(ptr);
@@ -180,6 +179,7 @@ class LinkedList {
 				continue;
 			}
 			cursor = cursor->next;
+			idx++;
 		}
 		return v;
 	}
@@ -208,46 +208,6 @@ class LinkedList {
 
 #undef CsLLCheckEmpty
 #undef CsLLCheckIndex
-
-	void each(const VisitorFunc& func) {
-		auto cursor = _head;
-		size_t ind = 0;
-		while (cursor != nullptr) {
-			if (!func(ind, cursor->val)) break;
-			ind++;
-			cursor = cursor->next;
-		}
-	}
-
-	void each(const ConstVisitorFunc& func) const {
-		auto cursor = _head;
-		size_t ind = 0;
-		while (cursor != nullptr) {
-			if (!func(ind, cursor->val)) break;
-			ind++;
-			cursor = cursor->next;
-		}
-	}
-
-	void reach(const VisitorFunc& func) {
-		auto cursor = _tail;
-		size_t ind = _size - 1;
-		while (cursor != nullptr) {
-			if (!func(ind, cursor->val)) break;
-			ind--;
-			cursor = cursor->prev;
-		}
-	}
-
-	void reach(const ConstVisitorFunc& func) const {
-		auto cursor = _head;
-		size_t ind = _size - 1;
-		while (cursor != nullptr) {
-			if (!func(ind, cursor->val)) break;
-			ind--;
-			cursor = cursor->prev;
-		}
-	}
 
 	Iterator begin() { return Iterator(this->_head); }
 
