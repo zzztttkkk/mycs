@@ -64,6 +64,6 @@ struct Comparator {
 	}
 };
 
-#define now std::chrono::system_clock::now
+#define Now std::chrono::system_clock::now
 
 }  // namespace cs

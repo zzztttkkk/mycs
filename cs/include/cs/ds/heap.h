@@ -4,9 +4,9 @@
 
 namespace cs {
 
-template<typename T, uint8_t N = 2, size_t InitCap = 6, typename Cmp = std::less<T>>
+template <typename T, uint8_t N = 2, size_t InitCap = 6, typename Cmp = std::less<T>>
 class Heap : public Drray<T, InitCap> {
-private:
+   private:
 	static_assert(N > 1, "cs:Heap: N > 1");
 
 	virtual void go_up() {
@@ -57,7 +57,7 @@ private:
 		}
 	}
 
-public:
+   public:
 	Heap() = default;
 
 	virtual ~Heap() = default;
@@ -90,12 +90,6 @@ public:
 		}
 		delete[] ptr;
 	}
-
-	static inline size_t p_idx(size_t idx) { return (idx - 1) / N; }
-
-	static inline size_t low_c_idx(size_t idx) { return idx * N + 1; }
-
-	static inline size_t high_c_idx(size_t idx) { return (idx + 1) * N; }
 };
 
 }  // namespace cs
