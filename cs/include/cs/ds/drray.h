@@ -4,18 +4,18 @@
 
 namespace cs {
 
-template<typename T, size_t InitCap = 6>
+template <typename T, size_t InitCap = 6>
 class Drray {
 	static_assert(InitCap > 0, "cs.ds.Drray: Zero InitCap");
 
-private:
-	template<bool IsConst>
+   private:
+	template <bool IsConst>
 	class BaseIterator {
-	private:
+	   private:
 		T* ptr;
 
-	public:
-		explicit BaseIterator(T* p) : ptr(p) {};
+	   public:
+		explicit BaseIterator(T* p) : ptr(p){};
 
 		virtual ~BaseIterator() = default;
 
@@ -31,34 +31,32 @@ private:
 
 		bool operator!=(const BaseIterator& other) const { return ptr != other.ptr; }
 
-		template<bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
+		template <bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
 		const T& operator*() {
 			return *ptr;
 		}
 
-		template<bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
+		template <bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
 		const T* operator->() {
 			return ptr;
 		}
 
-		template<bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
+		template <bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
 		T& operator*() {
 			return *ptr;
 		}
 
-		template<bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
+		template <bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
 		T* operator->() {
 			return ptr;
 		}
 	};
 
-public:
-	typedef std::function<bool(size_t, T&)> VisitorFunc;
-	typedef std::function<bool(size_t, const T&)> ConstVisitorFunc;
+   public:
 	typedef BaseIterator<true> ConstIterator;
 	typedef BaseIterator<false> Iterator;
 
-protected:
+   protected:
 	T* _ptr = nullptr;
 	size_t _size = 0;
 	size_t _cap = 0;
@@ -97,7 +95,7 @@ protected:
 		allocate(_size + 1);
 	}
 
-public:
+   public:
 	Drray() = default;
 
 	virtual ~Drray() {
@@ -148,32 +146,6 @@ public:
 
 	ConstIterator rend() const { return ConstIterator(this->_ptr - 1); }
 
-	void each(const VisitorFunc& func) {
-		for (size_t i = 0; i < _size; ++i) {
-			if (!func(i, _ptr[i])) break;
-		}
-	}
-
-	void reach(const VisitorFunc& func) {
-		if (empty()) return;
-		for (size_t i = _size - 1; i >= 0; --i) {
-			if (!func(i, _ptr[i])) break;
-		}
-	}
-
-	void each(const ConstVisitorFunc& func) const {
-		for (size_t i = 0; i < _size; ++i) {
-			if (!func(i, _ptr[i])) break;
-		}
-	}
-
-	void reach(const ConstVisitorFunc& func) const {
-		if (empty()) return;
-		for (size_t i = _size - 1; i >= 0; --i) {
-			if (!func(i, _ptr[i])) break;
-		}
-	}
-
 	void clear() { _size = 0; }
 
 	virtual void push_back(const T& val) {
@@ -181,21 +153,18 @@ public:
 		_ptr[_size++] = val;
 	}
 
-	template<typename SeqContainer>
+	template <typename SeqContainer>
 	void copy_to(SeqContainer& seq) const {
-		each([&seq](size_t i, const T& v) -> bool {
-			seq.push_back(v);
-			return true;
-		});
+		for (auto item : *this) seq.push_back(item);
 	}
 
-	template<typename SeqContainer>
+	template <typename SeqContainer>
 	void copy_from(const SeqContainer& seq) {
 		for (auto item : seq) push_back(item);
 	}
 
 #define CsDrrayCheckIndex \
-    if (index >= _size) throw std::runtime_error("cs.Drray: out of range")
+	if (index >= _size) throw std::runtime_error("cs.Drray: out of range")
 
 	T& at(size_t index) {
 		CsDrrayCheckIndex;
@@ -291,7 +260,7 @@ public:
 
 #undef CsDrrayCheckIndex
 
-	template<typename Cmp = std::less<T>>
+	template <typename Cmp = std::less<T>>
 	static bool is_sorted(const Drray<T, InitCap>& drray) {
 		if (drray.empty()) return true;
 		T* prev;
@@ -311,7 +280,7 @@ public:
 	}
 
 	static void print_to(const Drray<T, InitCap>& drray, std::ostream& output) {
-		output << fmt::format("Drray<{}, size: {}>: ", (void*) (const_cast<Drray<T, InitCap>*>(&drray)), drray.size());
+		output << fmt::format("Drray<{}, size: {}>: ", (void*)(const_cast<Drray<T, InitCap>*>(&drray)), drray.size());
 		for (auto item : drray) {
 			output << fmt::format("{}, ", item);
 		}

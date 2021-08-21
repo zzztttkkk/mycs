@@ -68,5 +68,4 @@ struct Comparator {
 template<typename Clock=std::chrono::system_clock>
 typename Clock::time_point now() { return Clock::now(); }
 
-
 }  // namespace cs

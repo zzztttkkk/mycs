@@ -7,9 +7,9 @@ using namespace std;
 using namespace cs;
 
 TEST(NHeap, PushAndPop) {
-	auto begin = now();
+	auto begin = Now();
 	for (int k = 0; k < 10000; ++k) {
-		Heap<int, 4> heap;
+		Heap<int, 8> heap;
 		vector<int> data;
 		for (int i = 0; i < 100; ++i) {
 			int v = cs::rand();
@@ -24,7 +24,7 @@ TEST(NHeap, PushAndPop) {
 			ind++;
 		}
 	}
-	FMT("{}\r\n", (now() - begin).count());
+	FMT("{}\r\n", (Now() - begin).count());
 }
 
 TestMain
