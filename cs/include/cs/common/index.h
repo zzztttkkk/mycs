@@ -64,6 +64,9 @@ struct Comparator {
 	}
 };
 
-#define now std::chrono::system_clock::now
+
+template<typename Clock=std::chrono::system_clock>
+typename Clock::time_point now() { return Clock::now(); }
+
 
 }  // namespace cs
