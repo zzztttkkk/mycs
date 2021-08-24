@@ -20,6 +20,6 @@ TEST(DSDrray, PushAndAt) {
 	drray.copy_to(vet);
 	drray.copy_from(vet);
 	FMT("Size: {}; Cap: {}", drray.size(), drray.cap());
-};
+}
 
-TestMain
+TestMain;

@@ -76,8 +76,6 @@ TEST(BinaryTree, InOrder) {
 	tree.each([](int v) { FMT("{}\r\n", v); });
 }
 
-TEST(Common, now) {
-	fmt::print("{}\n", cs::now().time_since_epoch().count());
-}
+
 
 TestMain

@@ -7,7 +7,7 @@ using namespace std;
 using namespace cs;
 
 TEST(NHeap, PushAndPop) {
-	auto begin = Now();
+	auto begin = now();
 	for (int k = 0; k < 10000; ++k) {
 		Heap<int, 8> heap;
 		vector<int> data;
@@ -24,7 +24,7 @@ TEST(NHeap, PushAndPop) {
 			ind++;
 		}
 	}
-	FMT("{}\r\n", (Now() - begin).count());
+	FMT("{}\r\n", (now() - begin).count());
 }
 
 TestMain
