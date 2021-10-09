@@ -6,22 +6,21 @@
 namespace cs {
 
 namespace {
-struct SetV {
-};
+struct SetV {};
 }  // namespace
 
-template<typename T, typename Hash = std::hash<T>, typename Equal = std::equal_to<T>, size_t InitCap = 12>
+template <typename T, typename Hash = std::hash<T>, typename Equal = std::equal_to<T>, size_t InitCap = 12>
 class HashSet {
-private:
-	typedef HashTable <T, SetV, Hash, Equal, InitCap> MapT;
+   private:
+	typedef HashTable<T, SetV, Hash, Equal, InitCap> MapT;
 	MapT* map = nullptr;
 
-public:
+   public:
 	class ConstIterator {
-	private:
+	   private:
 		typename MapT::ConstIterator mi;
 
-	public:
+	   public:
 		explicit ConstIterator(typename MapT::ConstIterator&& m) : mi(m) {}
 
 		~ConstIterator() = default;

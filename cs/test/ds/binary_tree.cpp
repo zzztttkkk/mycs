@@ -76,6 +76,4 @@ TEST(BinaryTree, InOrder) {
 	tree.each([](int v) { FMT("{}\r\n", v); });
 }
 
-
-
 TestMain

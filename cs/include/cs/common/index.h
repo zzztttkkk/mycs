@@ -59,19 +59,6 @@ void run(const Callable& callable, std::chrono::duration<double> duration = std:
 	}
 }
 
-template <typename T>
-struct Comparator {
-	constexpr int operator()(const T& a, const T& b) {
-		if (std::equal_to<T>{}(a, b)) {
-			return 0;
-		}
-		if (std::less<T>{}(a, b)) {
-			return -1;
-		}
-		return 1;
-	}
-};
-
 template <typename Clock = std::chrono::system_clock>
 typename Clock::time_point now() {
 	return Clock::now();

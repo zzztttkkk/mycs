@@ -6,7 +6,7 @@ namespace cs {
 
 template <typename T, size_t InitCap = 6>
 class Drray {
-	static_assert(InitCap > 0, "cs.ds.Drray: Zero InitCap");
+	static_assert(InitCap > 0 && InitCap < 1024 * 1024, "cs.ds.Drray: InitCap out of range");
 
    private:
 	template <bool IsConst>

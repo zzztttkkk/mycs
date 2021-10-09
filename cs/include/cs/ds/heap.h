@@ -8,9 +8,11 @@ template <typename T, uint8_t N = 2, size_t InitCap = 6, typename Cmp = std::les
 class Heap : public Drray<T, InitCap> {
    private:
 	static_assert(N > 1, "cs:Heap: N > 1");
+	const static size_t de = static_cast<size_t>(-1);
 
-	virtual void go_up() {
-		size_t ind = this->_size - 1;
+	void go_up(size_t start = de) {
+		if (start == de) start = this->_size - 1;
+		size_t ind = start;
 		Cmp cmp;
 
 		while (ind != 0) {
@@ -26,22 +28,19 @@ class Heap : public Drray<T, InitCap> {
 		}
 	}
 
-	virtual void go_down() {
+	void go_down(size_t end = de) {
 		size_t ind = 0;
 		Cmp cmp;
+		if (end == de) end = this->_size;
 
-		while (ind < this->_size) {
+		while (ind < end) {
 			auto lowInd = ind * N + 1;
-			if (lowInd >= this->_size) {
-				return;
-			}
+			if (lowInd >= end) return;
 
 			T* minVP = this->_ptr + lowInd;
 			auto minIdx = lowInd;
 			for (auto j = lowInd + 1; j < lowInd + N; j++) {
-				if (j >= this->_size) {
-					break;
-				}
+				if (j >= end) break;
 				if (cmp(this->_ptr[j], *minVP)) {
 					minVP = this->_ptr + j;
 					minIdx = j;
@@ -49,9 +48,7 @@ class Heap : public Drray<T, InitCap> {
 			}
 
 			T& cV = this->_ptr[ind];
-			if (cmp(cV, *minVP)) {
-				return;
-			}
+			if (cmp(cV, *minVP)) return;
 			std::swap(cV, *minVP);
 			ind = minIdx;
 		}
@@ -62,7 +59,7 @@ class Heap : public Drray<T, InitCap> {
 
 	virtual ~Heap() = default;
 
-	void push_back(const T& val) {
+	void push_back(const T& val) override {
 		Drray<T, InitCap>::push_back(val);
 		go_up();
 	}
@@ -74,21 +71,6 @@ class Heap : public Drray<T, InitCap> {
 
 		go_down();
 		return v;
-	}
-
-	void make() {
-		if (this->empty()) {
-			return;
-		}
-
-		T* nPtr = new T[this->_cap];
-		T* ptr = this->_ptr;
-		this->_ptr = nPtr;
-		this->_size = 0;
-		for (size_t i = 0; i < this->_size - 1; ++i) {
-			push(ptr[i]);
-		}
-		delete[] ptr;
 	}
 };
 

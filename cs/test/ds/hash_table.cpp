@@ -33,7 +33,7 @@ void f2() {
 	}
 
 	const auto& cf = map;
-	for (auto item: cf) {
+	for (auto item : cf) {
 		FMT("{} {}\r\n", item->key(), item->val());
 	}
 }

@@ -3,27 +3,26 @@
 #include "../common/index.h"
 #include "./drray.h"
 #include "./linkedlist.h"
-#include <ctime>
 
 namespace cs {
 
-template<typename K, typename V, typename Hash = std::hash<K>, typename Equal = std::equal_to<K>, size_t InitCap = 12>
+template <typename K, typename V, typename Hash = std::hash<K>, typename Equal = std::equal_to<K>, size_t InitCap = 12>
 class HashTable {
-public:
+   public:
 	class Node;
 
 	typedef LinkedList<Node*> List;
 	typedef Drray<List*> Data;
 
 	class Node {
-	private:
+	   private:
 		friend class HashTable<K, V, Hash, Equal, InitCap>;
 
 		K _key;
 		V _val;
 		size_t hash;
 
-	public:
+	   public:
 		Node(const K& k, const V& v, size_t h) : _key(k), _val(v), hash(h) {}
 
 		virtual ~Node() = default;
@@ -35,7 +34,17 @@ public:
 		const V& val() const { return _val; }
 	};
 
-private:
+	class MissingKey : public std::exception {
+	   private:
+		std::string v;
+
+	   public:
+		explicit MissingKey(const K& key) { v = fmt::format("Missing Key: {}", key); }
+
+		[[nodiscard]] char const* what() const override { return v.c_str(); }
+	};
+
+   private:
 	typedef HashTable<K, V, Hash, Equal, InitCap> ThisType;
 	typedef typename List::Iterator ListIter;
 
@@ -93,7 +102,6 @@ private:
 		list->push_back(node);
 	}
 
-
 	std::optional<std::reference_wrapper<V>> _find(const K& key) {
 		auto hV = calc_hash(key);
 		Node* node = do_find(key, hV);
@@ -111,9 +119,9 @@ private:
 		this->seed = distribution(mt19937);
 	}
 
-	template<bool IsConst>
+	template <bool IsConst>
 	class BaseIterator {
-	protected:
+	   protected:
 		ThisType* map = nullptr;
 		size_t ind = 0;
 		ListIter li;
@@ -142,7 +150,7 @@ private:
 			ok = true;
 		}
 
-	public:
+	   public:
 		BaseIterator(ThisType* m, size_t i) : map(m), ind(i) {}
 
 		~BaseIterator() = default;
@@ -154,20 +162,28 @@ private:
 
 		bool operator!=(const BaseIterator& other) const { return this->ind != other.ind; }
 
-		template<bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
-		const Node* operator*() { return *(li); }
+		template <bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
+		const Node* operator*() {
+			return *(li);
+		}
 
-		template<bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
-		const Node* operator->() { return *(li); }
+		template <bool WasConst = IsConst, typename = typename std::enable_if<WasConst, void>::type>
+		const Node* operator->() {
+			return *(li);
+		}
 
-		template<bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
-		Node* operator*() { return *(li); }
+		template <bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
+		Node* operator*() {
+			return *(li);
+		}
 
-		template<bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
-		Node* operator->() { return *(li); }
+		template <bool WasConst = IsConst, typename = typename std::enable_if<!WasConst, void>::type>
+		Node* operator->() {
+			return *(li);
+		}
 	};
 
-public:
+   public:
 	typedef BaseIterator<true> ConstIterator;
 	typedef BaseIterator<false> Iterator;
 	typedef std::optional<const std::reference_wrapper<V>> ConstValRefOptional;
@@ -191,9 +207,9 @@ public:
 		delete data;
 	}
 
-	size_t size() { return _size; }
+	[[nodiscard]] size_t size() const { return _size; }
 
-	bool empty() { return _size == 0; }
+	[[nodiscard]] bool empty() const { return _size == 0; }
 
 	std::optional<V> set(const K& key, const V& val) {
 		size_t hash_val = calc_hash(key);
@@ -220,9 +236,7 @@ public:
 		return old_val;
 	}
 
-	inline ValRefOptional find(const K& key) {
-		return _find(key);
-	}
+	inline ValRefOptional find(const K& key) { return _find(key); }
 
 	ConstValRefOptional find(const K& key) const {
 		ValRefOptional&& opt = const_cast<ThisType*>(this)->_find(key);
@@ -232,8 +246,6 @@ public:
 		return {};
 	}
 
-	[[nodiscard]] inline bool empty() const { return _size == 0; }
-
 	bool contains(const K& key) { return find(key, calc_hash(key)).has_value(); }
 
 	V& at(const K& key) {
@@ -241,7 +253,7 @@ public:
 		if (opt.has_value()) {
 			return opt.value();
 		}
-		throw std::runtime_error("cs.HashTable: missing key");
+		throw MissingKey(key);
 	}
 
 	const V& at(const K& key) const {
@@ -249,7 +261,7 @@ public:
 		if (opt.has_value()) {
 			return opt.value();
 		}
-		throw std::runtime_error("cs.HashTable: missing key");
+		throw MissingKey(key);
 	}
 
 	std::optional<V> del(const K& key) {
@@ -275,9 +287,21 @@ public:
 		return val;
 	}
 
-	typedef std::function<bool(const K& key, const V& val)> ItemVisitorFunc;
+	typedef std::function<bool(const K& key, V& val)> ItemVisitorFunc;
 
 	void items(const ItemVisitorFunc& func) {
+		if (empty()) return;
+		for (auto list : *data) {
+			if (list == nullptr) continue;
+			for (Node* node : *list) {
+				if (!func(node->_key, node->_val)) return;
+			}
+		}
+	}
+
+	typedef std::function<bool(const K& key, const V& val)> ConstItemVisitorFunc;
+
+	void items(const ConstItemVisitorFunc& func) const {
 		if (empty()) return;
 		for (auto list : *data) {
 			if (list == nullptr) continue;
@@ -299,9 +323,21 @@ public:
 		}
 	}
 
-	typedef std::function<bool(const V& val)> ValVisitorFunc;
+	typedef std::function<bool(const V& val)> ConstValVisitorFunc;
 
-	void values(const ValVisitorFunc& func) const {
+	void values(const ConstValVisitorFunc& func) const {
+		if (empty()) return;
+		for (auto list : *data) {
+			if (list == nullptr) continue;
+			for (Node* node : *list) {
+				if (!func(node->_val)) return;
+			}
+		}
+	}
+
+	typedef std::function<bool(V& val)> ValVisitorFunc;
+
+	void values(const ValVisitorFunc& func) {
 		if (empty()) return;
 		for (auto list : *data) {
 			if (list == nullptr) continue;
