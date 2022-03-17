@@ -37,3 +37,8 @@
 /.vscode
 **/out
 /CMakeSettings.json
+
+
+# Added by cargo
+
+/target
