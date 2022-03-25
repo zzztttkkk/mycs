@@ -1,6 +1,6 @@
-use std::{io, mem, net, sync, thread};
+use std::{io, mem, net, thread};
 use std::collections::HashSet;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use crate::conn;
 
@@ -63,7 +63,7 @@ impl Server {
 		mem::drop(internal);
 
 		loop {
-			let mut internal = self.internal.read().unwrap();
+			let internal = self.internal.read().unwrap();
 			if internal.closed {
 				break;
 			}
@@ -79,7 +79,7 @@ impl Server {
 	pub fn run(&mut self) {
 		let mut internal = self.internal.write().unwrap();
 		internal.listen();
-		internal.listener.as_ref().unwrap().set_nonblocking(true);
+		internal.listener.as_ref().unwrap().set_nonblocking(true).unwrap();
 		internal.running = true;
 		println!("server running @ {}:{}", internal.host, internal.port);
 		mem::drop(internal);
@@ -90,7 +90,7 @@ impl Server {
 				mem::drop(internal);
 				let mut internal = self.internal.write().unwrap();
 				internal.running = false;
-				internal.close();
+				let _ = internal.close();
 				break;
 			}
 			mem::drop(internal);
@@ -103,6 +103,7 @@ impl Server {
 					internal.alive.insert(conn.clone());
 					thread::spawn(move || {
 						conn.handle();
+						conn.close();
 					});
 				}
 				Err(e) => {
