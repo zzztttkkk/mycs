@@ -1,36 +1,42 @@
 use std::{io, net, sync};
 use std::hash::{Hash, Hasher};
 use std::io::Write;
+use std::sync::{Arc, Mutex, RwLock};
+use crate::server::ServerInternal;
 
 pub struct Conn {
-	stream_lock: sync::Mutex<()>,
-	stream: net::TcpStream,
+	server: Arc<RwLock<ServerInternal>>,
+	stream: Mutex<net::TcpStream>,
 }
 
 impl Conn {
-	pub fn new(stream: net::TcpStream) -> Self {
-		return Conn {
-			stream,
-			stream_lock: sync::Mutex::new(()),
+	pub fn new(server: Arc<RwLock<ServerInternal>>, stream: net::TcpStream) -> Self {
+		return Self {
+			server,
+			stream: Mutex::new(stream),
 		};
 	}
 
-	pub fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-		let _ = self.stream_lock.lock().unwrap();
-		return self.stream.write(buf);
+	pub fn handle(&self) {
+		let stream = &(self.stream.lock().unwrap());
+		println!("{:?}", stream.peer_addr());
+
+		self.close();
 	}
 
-	pub fn flush(&mut self) -> io::Result<()> {
-		let _ = self.stream_lock.lock().unwrap();
-		return self.stream.flush();
+	fn close(&self) {
+		let mut server = self.server.write().unwrap();
+		server.remove(self);
 	}
+}
 
-	pub fn handle(&mut self) {}
+fn conn_stream_ptr(c: &Conn) -> u64 {
+	return &(c.stream) as (*const Mutex<net::TcpStream>) as u64;
 }
 
 impl PartialEq<Self> for Conn {
 	fn eq(&self, other: &Self) -> bool {
-		return self as (*const Self) as u64 == other as (*const Self) as u64;
+		return conn_stream_ptr(self) == conn_stream_ptr(other);
 	}
 }
 
@@ -38,12 +44,12 @@ impl Eq for Conn {}
 
 impl Hash for Conn {
 	fn hash<H: Hasher>(&self, state: &mut H) {
-		state.write_u64(self as (*const Self) as u64);
+		state.write_u64(conn_stream_ptr(self));
 	}
 
 	fn hash_slice<H: Hasher>(data: &[Self], state: &mut H) where Self: Sized {
 		for datum in data {
-			state.write_u64(datum as (*const Self) as u64);
+			state.write_u64(conn_stream_ptr(datum));
 		}
 	}
 }
