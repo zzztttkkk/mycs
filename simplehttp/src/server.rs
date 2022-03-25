@@ -56,7 +56,7 @@ impl Server {
 		};
 	}
 
-	pub fn close(&mut self) {
+	pub fn close(&self) {
 		let mut internal = self.internal.write().unwrap();
 		if internal.stop { return; }
 		internal.stop = true;
@@ -76,7 +76,7 @@ impl Server {
 		return internal.running;
 	}
 
-	pub fn run(&mut self) {
+	pub fn run(&self) {
 		let mut internal = self.internal.write().unwrap();
 		internal.listen();
 		internal.listener.as_ref().unwrap().set_nonblocking(true).unwrap();
