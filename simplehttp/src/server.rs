@@ -63,7 +63,7 @@ impl Server {
 		mem::drop(internal);
 
 		loop {
-			let mut internal = self.internal.write().unwrap();
+			let mut internal = self.internal.read().unwrap();
 			if internal.closed {
 				break;
 			}
