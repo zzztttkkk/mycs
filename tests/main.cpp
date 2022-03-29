@@ -12,13 +12,12 @@ int main() {
 
 	headers.append("a", "12我");
 	headers.reset("a", "45");
+	headers.append("a", "rtg");
 
-	auto ptr = headers.all("a");
-
-	if (ptr != nullptr) {
-		for (auto val: *ptr) {
-			fmt::print("{}\r\n", *val);
-		}
-	}
+	headers.each([](const auto& a, std::string& b) {
+		fmt::print("{} {}\n", a, b);
+		b += "qwe";
+		return true;
+	});
 	return 0;
 }

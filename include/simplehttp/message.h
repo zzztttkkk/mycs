@@ -164,12 +164,140 @@ public:
 			}
 		}
 	}
+
+	void each(const std::function<bool(const std::string&, std::string&)>& fn) {
+		if (this->map != nullptr) {
+			for (auto& pair: *this->map) {
+				for (auto& val: *pair.second) {
+					if (!fn(pair.first, val)) return;
+				}
+			}
+			return;
+		}
+
+		for (auto& pair: this->items) {
+			if (pair.invalid) continue;
+			if (!fn(pair.key, pair.val)) return;
+		}
+	}
+
+	void each(const std::function<bool(const std::string&, const std::string&)>& fn) const {
+		if (this->map != nullptr) {
+			for (const auto& pair: *this->map) {
+				for (const auto& val: *pair.second) {
+					if (!fn(pair.first, val)) return;
+				}
+			}
+			return;
+		}
+
+		for (const auto& pair: this->items) {
+			if (pair.invalid) continue;
+			if (!fn(pair.key, pair.val)) return;
+		}
+	}
 };
 
 class Message {
-	std::vector<BYTE> fl1;
-	std::vector<BYTE> fl2;
-	std::vector<BYTE> fl3;
+protected:
+	char status = 0;
+	std::string fl1;
+	std::string fl2;
+	std::string fl3;
+	Headers _headers;
+	asio::mutable_buffer rbuf;
+	asio::mutable_buffer wbuf;
+
+	Message() = default;
+
+	virtual ~Message() = default;
+
+public:
+	Headers& headers() { return this->_headers; }
+
+	[[nodiscard]]
+	const Headers& headers() const { return this->_headers; }
+
+	// fl1 1 fl2 2 fl3 3
+	// headers 4
+	// body 5
+	int feed(char c) {
+
+	}
+};
+
+enum HttpVersion : uint16_t {
+	Unknown = 0x00,
+	H10 = 0x10,
+	H11 = 0x11,
+};
+
+const std::string& httpversion2string(HttpVersion version);
+
+HttpVersion string2httpversion(const std::string&);
+
+class Request : public Message {
+public:
+	Request() : Message() {}
+
+	[[nodiscard]]
+	const std::string& method() const { return this->fl1; }
+
+	Request* method(const std::string& method) {
+		this->fl1 = method;
+		return this;
+	}
+
+	[[nodiscard]]
+	const std::string& rawpath() const { return this->fl2; }
+
+	Request* rawpath(const std::string& rawpath) {
+		this->fl2 = rawpath;
+		return this;
+	}
+
+	[[nodiscard]]
+	HttpVersion version() const { return string2httpversion(this->fl1); }
+
+	Request* version(HttpVersion version) {
+		this->fl3 = httpversion2string(version);
+		return this;
+	}
+};
+
+
+class Response : public Message {
+private:
+	uint16_t _status = 0;
+
+public:
+	Response() : Message() {
+	}
+
+	[[nodiscard]]
+	HttpVersion version() const { return string2httpversion(this->fl1); }
+
+	Response* version(HttpVersion version) {
+		this->fl1 = httpversion2string(version);
+		return this;
+	}
+
+	[[nodiscard]]
+	uint16_t status() const {
+		if (this->_status != 0) return this->_status;
+		if (this->fl2.empty()) return 0;
+		return static_cast<uint16_t>(std::strtol(this->fl2.c_str(), nullptr, 10));
+	}
+
+	[[nodiscard]]
+	uint16_t status() {
+		if (this->_status != 0) return this->_status;
+		this->_status = const_cast<const Response*>(this)->status();
+		return this->_status;
+	}
+
+	[[nodiscard]]
+	const std::string& phrase() const { return this->fl3; }
 };
 
 }
