@@ -2,7 +2,6 @@
 // Created by ztk on 2022/3/29.
 //
 
-
 #include <simplehttp/message.h>
 
 namespace mycs::simplehttp {
@@ -26,10 +25,10 @@ const std::string& httpversion2string(HttpVersion version) {
 }
 
 std::unordered_map<std::string, HttpVersion> map = {
-		{"http/1.1", HttpVersion::H11},
-		{"HTTP/1.1", HttpVersion::H11},
-		{"http/1.0", HttpVersion::H10},
-		{"HTTP/1.0", HttpVersion::H10}
+	{"http/1.1", HttpVersion::H11},
+	{"HTTP/1.1", HttpVersion::H11},
+	{"http/1.0", HttpVersion::H10},
+	{"HTTP/1.0", HttpVersion::H10}
 };
 
 HttpVersion string2httpversion(const std::string& vstr) {
@@ -40,4 +39,4 @@ HttpVersion string2httpversion(const std::string& vstr) {
 	return iter->second;
 }
 
-}
+}  // namespace mycs::simplehttp
