@@ -19,5 +19,7 @@ int main() {
 		b += "qwe";
 		return true;
 	});
+
+	fmt::print("{}\r\n", mycs::simplehttp::httpversion2string(mycs::simplehttp::HttpVersion::H11));
 	return 0;
 }

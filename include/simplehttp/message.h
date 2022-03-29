@@ -4,6 +4,13 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <memory>
+#include <functional>
+#include <asio.hpp>
+
 namespace mycs::simplehttp {
 
 #ifndef MYCS_SIMPLEHTTP_HEADERS_VECTOR_SIZE
@@ -226,7 +233,7 @@ public:
 	}
 };
 
-enum HttpVersion : uint16_t {
+enum class HttpVersion : uint16_t {
 	Unknown = 0x00,
 	H10 = 0x10,
 	H11 = 0x11,

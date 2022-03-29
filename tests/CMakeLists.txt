@@ -1,5 +1,5 @@
-file(GLOB_RECURSE all_cs_source ../src/**/*.cpp;../src/*.cpp)
-file(GLOB_RECURSE all_test *.cpp;**/*.cpp)
+file(GLOB_RECURSE all_cs_source ${CMAKE_SOURCE_DIR}/src/**/*.cpp;${CMAKE_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE all_test ${CMAKE_SOURCE_DIR}/tests/*.cpp;${CMAKE_SOURCE_DIR}/tests/**/*.cpp)
 
 foreach (item ${all_test})
 	get_filename_component(name ${item} NAME_WE)
