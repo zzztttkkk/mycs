@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <memory>
-#include <functional>
 #include <asio.hpp>
+#include <functional>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace mycs::simplehttp {
 
@@ -18,19 +18,17 @@ namespace mycs::simplehttp {
 #endif
 
 class Headers {
-private:
+   private:
 	class Pair {
-	private:
+	   private:
 		friend class Headers;
 
 		std::string key;
 		std::string val;
 		bool invalid = true;
 
-	public:
-		Pair(const std::string& k, const std::string& v) {
-			this->load(k, v);
-		}
+	   public:
+		Pair(const std::string& k, const std::string& v) { this->load(k, v); }
 
 		void load(const std::string& k, const std::string& v) {
 			this->key = k;
@@ -57,12 +55,12 @@ private:
 		vec->push_back(val);
 	}
 
-public:
+   public:
 	Headers() = default;
 
 	virtual ~Headers() {
 		if (this->map != nullptr) {
-			for (const auto& pair: *this->map) {
+			for (const auto& pair : *this->map) {
 				delete (pair.second);
 			}
 			delete (this->map);
@@ -80,7 +78,7 @@ public:
 			return;
 		}
 
-		for (auto& pair: this->items) {
+		for (auto& pair : this->items) {
 			if (pair.invalid) {
 				pair.load(key, val);
 				return;
@@ -90,7 +88,7 @@ public:
 		this->items.emplace_back(key, val);
 		if (this->items.size() > MYCS_SIMPLEHTTP_HEADERS_VECTOR_SIZE) {
 			this->map = new (typename Headers::MapType)();
-			for (const auto& pair: this->items) {
+			for (const auto& pair : this->items) {
 				if (pair.invalid) continue;
 				this->append_to_map(pair.key, pair.val);
 			}
@@ -103,12 +101,11 @@ public:
 		this->append(key, val);
 	}
 
-	[[nodiscard]]
-	bool exists(const std::string& key) const {
+	[[nodiscard]] bool exists(const std::string& key) const {
 		if (this->map != nullptr) {
 			return this->map->contains(key);
 		}
-		for (const auto& pair: this->items) {
+		for (const auto& pair : this->items) {
 			if (pair.invalid) continue;
 			if (pair.key == key) {
 				return true;
@@ -117,14 +114,13 @@ public:
 		return false;
 	}
 
-	[[nodiscard]]
-	const std::string* one(const std::string& key) const {
+	[[nodiscard]] const std::string* one(const std::string& key) const {
 		if (this->map != nullptr) {
 			auto iter = this->map->find(key);
 			if (iter == this->map->end()) return nullptr;
 			return &(iter->second->at(0));
 		}
-		for (const auto& pair: this->items) {
+		for (const auto& pair : this->items) {
 			if (pair.invalid) continue;
 			if (pair.key == key) {
 				return &(pair.val);
@@ -133,20 +129,19 @@ public:
 		return nullptr;
 	}
 
-	[[nodiscard]]
-	std::unique_ptr<typename Headers::ValVecType> all(const std::string& key) const {
+	[[nodiscard]] std::unique_ptr<typename Headers::ValVecType> all(const std::string& key) const {
 		if (this->map != nullptr) {
 			auto iter = this->map->find(key);
 			if (iter == this->map->end()) return nullptr;
 			auto _ptr = new typename Headers::ValVecType();
-			for (const auto& val: *iter->second) {
+			for (const auto& val : *iter->second) {
 				_ptr->push_back(&val);
 			}
 			return std::unique_ptr<typename Headers::ValVecType>(_ptr);
 		}
 
 		auto _ptr = new typename Headers::ValVecType();
-		for (const auto& pair: this->items) {
+		for (const auto& pair : this->items) {
 			if (pair.invalid) continue;
 			if (pair.key == key) {
 				_ptr->push_back(&(pair.val));
@@ -164,7 +159,7 @@ public:
 			return;
 		}
 
-		for (auto& pair: this->items) {
+		for (auto& pair : this->items) {
 			if (pair.invalid) continue;
 			if (pair.key == key) {
 				pair.invalid = true;
@@ -174,15 +169,15 @@ public:
 
 	void each(const std::function<bool(const std::string&, std::string&)>& fn) {
 		if (this->map != nullptr) {
-			for (auto& pair: *this->map) {
-				for (auto& val: *pair.second) {
+			for (auto& pair : *this->map) {
+				for (auto& val : *pair.second) {
 					if (!fn(pair.first, val)) return;
 				}
 			}
 			return;
 		}
 
-		for (auto& pair: this->items) {
+		for (auto& pair : this->items) {
 			if (pair.invalid) continue;
 			if (!fn(pair.key, pair.val)) return;
 		}
@@ -190,47 +185,42 @@ public:
 
 	void each(const std::function<bool(const std::string&, const std::string&)>& fn) const {
 		if (this->map != nullptr) {
-			for (const auto& pair: *this->map) {
-				for (const auto& val: *pair.second) {
+			for (const auto& pair : *this->map) {
+				for (const auto& val : *pair.second) {
 					if (!fn(pair.first, val)) return;
 				}
 			}
 			return;
 		}
 
-		for (const auto& pair: this->items) {
+		for (const auto& pair : this->items) {
 			if (pair.invalid) continue;
 			if (!fn(pair.key, pair.val)) return;
 		}
 	}
 };
 
+class Conn;
+
 class Message {
-protected:
-	char status = 0;
+   protected:
+	friend class Conn;
+
 	std::string fl1;
 	std::string fl2;
 	std::string fl3;
 	Headers _headers;
-	asio::mutable_buffer rbuf;
-	asio::mutable_buffer wbuf;
+	asio::streambuf rbuf;
+	asio::streambuf wbuf;
 
 	Message() = default;
 
 	virtual ~Message() = default;
 
-public:
+   public:
 	Headers& headers() { return this->_headers; }
 
-	[[nodiscard]]
-	const Headers& headers() const { return this->_headers; }
-
-	// fl1 1 fl2 2 fl3 3
-	// headers 4
-	// body 5
-	int feed(char c) {
-
-	}
+	[[nodiscard]] const Headers& headers() const { return this->_headers; }
 };
 
 enum class HttpVersion : uint16_t {
@@ -244,27 +234,24 @@ const std::string& httpversion2string(HttpVersion version);
 HttpVersion string2httpversion(const std::string&);
 
 class Request : public Message {
-public:
+   public:
 	Request() : Message() {}
 
-	[[nodiscard]]
-	const std::string& method() const { return this->fl1; }
+	[[nodiscard]] const std::string& method() const { return this->fl1; }
 
 	Request* method(const std::string& method) {
 		this->fl1 = method;
 		return this;
 	}
 
-	[[nodiscard]]
-	const std::string& rawpath() const { return this->fl2; }
+	[[nodiscard]] const std::string& rawpath() const { return this->fl2; }
 
 	Request* rawpath(const std::string& rawpath) {
 		this->fl2 = rawpath;
 		return this;
 	}
 
-	[[nodiscard]]
-	HttpVersion version() const { return string2httpversion(this->fl1); }
+	[[nodiscard]] HttpVersion version() const { return string2httpversion(this->fl1); }
 
 	Request* version(HttpVersion version) {
 		this->fl3 = httpversion2string(version);
@@ -272,39 +259,33 @@ public:
 	}
 };
 
-
 class Response : public Message {
-private:
+   private:
 	uint16_t _status = 0;
 
-public:
-	Response() : Message() {
-	}
+   public:
+	Response() : Message() {}
 
-	[[nodiscard]]
-	HttpVersion version() const { return string2httpversion(this->fl1); }
+	[[nodiscard]] HttpVersion version() const { return string2httpversion(this->fl1); }
 
 	Response* version(HttpVersion version) {
 		this->fl1 = httpversion2string(version);
 		return this;
 	}
 
-	[[nodiscard]]
-	uint16_t status() const {
+	[[nodiscard]] uint16_t status() const {
 		if (this->_status != 0) return this->_status;
 		if (this->fl2.empty()) return 0;
 		return static_cast<uint16_t>(std::strtol(this->fl2.c_str(), nullptr, 10));
 	}
 
-	[[nodiscard]]
-	uint16_t status() {
+	[[nodiscard]] uint16_t status() {
 		if (this->_status != 0) return this->_status;
 		this->_status = const_cast<const Response*>(this)->status();
 		return this->_status;
 	}
 
-	[[nodiscard]]
-	const std::string& phrase() const { return this->fl3; }
+	[[nodiscard]] const std::string& phrase() const { return this->fl3; }
 };
 
-}
+}  // namespace mycs::simplehttp

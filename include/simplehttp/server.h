@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include <optional>
 #include <asio.hpp>
+#include <optional>
 #include <shared_mutex>
+#include <thread>
+
 #include "./conn.h"
 #include "./handler.h"
 #include "./message.h"
@@ -16,15 +18,13 @@ namespace mycs::simplehttp {
 class Server {
 	using tcp = asio::ip::tcp;
 
-private:
+   private:
 	std::shared_mutex mutex;
 	asio::io_context ctx;
 	std::optional<tcp::acceptor> acceptor;
 
-public:
-	Server() {
-		this->acceptor = std::nullopt;
-	}
+   public:
+	Server() { this->acceptor = std::nullopt; }
 
 	virtual ~Server() {
 		if (this->acceptor.has_value()) {
@@ -49,6 +49,7 @@ public:
 		endpoint.address(address);
 		endpoint.port(port);
 		this->acceptor = tcp::acceptor(this->ctx, endpoint);
+		this->acceptor.value().non_blocking(true);
 	}
 
 	void run() {
@@ -60,14 +61,17 @@ public:
 		this->mutex.unlock();
 
 		auto acceptor_ptr = &this->acceptor.value();
-		asio::ip::tcp::socket sock(this->ctx);
-
+		asio::error_code err;
 		while (true) {
-			acceptor_ptr->accept(sock);
-			asio::write(sock, asio::buffer("HTTP/1.0 200 OK\r\nContent-Length: 11\r\n\r\nHello World"));
-			sock.close();
+			err.clear();
+			auto conn = new Conn(new asio::ip::tcp::socket(this->ctx));
+			acceptor_ptr->accept(conn->socket(), err);
+			if (err) {
+				continue;
+			}
+			std::thread([conn]() { conn->handle(); }).detach();
 		}
 	}
 };
 
-}
+}  // namespace mycs::simplehttp
