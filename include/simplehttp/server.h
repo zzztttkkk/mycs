@@ -88,8 +88,6 @@ class Server {
 		this->mutex.lock();
 		this->closed = true;
 		this->mutex.unlock();
-
-		std::cout << "OK" << std::endl;
 	}
 
 	int run() {
@@ -102,11 +100,13 @@ class Server {
 		this->mutex.unlock();
 
 		auto aptr = &this->acceptor.value();
+		aptr->listen(256);
 
 		asio::error_code err;
 
 		asio::signal_set signals(this->ctx, SIGINT);
 		signals.async_wait([this](auto e, int s) { this->close(); });
+		std::thread([this]() { this->ctx.run(); }).detach();
 
 		while (true) {
 			err.clear();
