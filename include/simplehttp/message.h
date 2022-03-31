@@ -105,13 +105,9 @@ class Headers {
 		if (this->map != nullptr) {
 			return this->map->contains(key);
 		}
-		for (const auto& pair : this->items) {
-			if (pair.invalid) continue;
-			if (pair.key == key) {
-				return true;
-			}
-		}
-		return false;
+		return std::any_of(this->items.begin(), this->items.end(), [key](const auto& pair) {
+			return !pair.invalid && pair.key == key;
+		});
 	}
 
 	[[nodiscard]] const std::string* one(const std::string& key) const {
@@ -206,9 +202,6 @@ class Message {
    protected:
 	friend class Conn;
 
-	std::string fl1;
-	std::string fl2;
-	std::string fl3;
 	Headers _headers;
 	asio::streambuf rbuf;
 	asio::streambuf wbuf;
@@ -217,75 +210,54 @@ class Message {
 
 	virtual ~Message() = default;
 
+	virtual bool fl1(const std::string&) = 0;
+	virtual bool fl2(const std::string&) = 0;
+	virtual bool fl3(const std::string&) = 0;
+
    public:
 	Headers& headers() { return this->_headers; }
 
 	[[nodiscard]] const Headers& headers() const { return this->_headers; }
 };
 
-enum class HttpVersion : uint16_t {
+enum class ProtocolVersion : uint16_t {
 	Unknown = 0x00,
-	H10 = 0x10,
-	H11 = 0x11,
+	IO = 0x10,
+	II = 0x11,
+	ZO = 0x20,
 };
 
-const std::string& httpversion2string(HttpVersion version);
+enum class Method : uint16_t { Unknown = 0x00, Get = 0x07, Head, Post, Put, Delete, Connect, Options, Trace, Patch };
 
-HttpVersion string2httpversion(const std::string&);
+const std::string& protocolversion2string(ProtocolVersion version);
+
+ProtocolVersion string2protocolversion(const std::string&);
+
+Method string2method(const std::string&);
+
+const std::string& method2string(Method method);
 
 class Request : public Message {
+   private:
+	Method _method = Method::Unknown;
+	std::string _rawpath;
+	ProtocolVersion _protocolversion = ProtocolVersion::Unknown;
+
+	bool fl1(const std::string& v) override {
+		this->_method = string2method(v);
+		return this->_method != Method::Unknown;
+	}
+	bool fl2(const std::string& v) override {
+		this->_rawpath = v;
+		return true;
+	}
+	bool fl3(const std::string& v) override {
+		this->_protocolversion = string2protocolversion(v);
+		return this->_protocolversion != ProtocolVersion::Unknown;
+	}
+
    public:
 	Request() : Message() {}
-
-	[[nodiscard]] const std::string& method() const { return this->fl1; }
-
-	Request* method(const std::string& method) {
-		this->fl1 = method;
-		return this;
-	}
-
-	[[nodiscard]] const std::string& rawpath() const { return this->fl2; }
-
-	Request* rawpath(const std::string& rawpath) {
-		this->fl2 = rawpath;
-		return this;
-	}
-
-	[[nodiscard]] HttpVersion version() const { return string2httpversion(this->fl1); }
-
-	Request* version(HttpVersion version) {
-		this->fl3 = httpversion2string(version);
-		return this;
-	}
-};
-
-class Response : public Message {
-   private:
-	uint16_t _status = 0;
-
-   public:
-	Response() : Message() {}
-
-	[[nodiscard]] HttpVersion version() const { return string2httpversion(this->fl1); }
-
-	Response* version(HttpVersion version) {
-		this->fl1 = httpversion2string(version);
-		return this;
-	}
-
-	[[nodiscard]] uint16_t status() const {
-		if (this->_status != 0) return this->_status;
-		if (this->fl2.empty()) return 0;
-		return static_cast<uint16_t>(std::strtol(this->fl2.c_str(), nullptr, 10));
-	}
-
-	[[nodiscard]] uint16_t status() {
-		if (this->_status != 0) return this->_status;
-		this->_status = const_cast<const Response*>(this)->status();
-		return this->_status;
-	}
-
-	[[nodiscard]] const std::string& phrase() const { return this->fl3; }
 };
 
 }  // namespace mycs::simplehttp
