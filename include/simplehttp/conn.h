@@ -21,18 +21,24 @@
 
 namespace mycs::simplehttp {
 
+class Server;
+
+void do_remove_conn_from_server(Server* server, Conn* conn);
+
 class Conn {
 	using tcp = asio::ip::tcp;
 
    private:
+	Server* server;
 	tcp::socket* sock = nullptr;
 	asio::streambuf buf;
 	std::string temp;
 
    public:
-	explicit Conn(tcp::socket* s) { this->sock = s; }
+	Conn(Server* server, tcp::socket* sock) : server(server), sock(sock) {}
 
 	virtual ~Conn() {
+		do_remove_conn_from_server(this->server, this);
 		if (this->sock) {
 			this->sock->close();
 			delete (this->sock);

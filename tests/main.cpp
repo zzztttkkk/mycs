@@ -10,8 +10,6 @@ using namespace mycs::simplehttp;
 
 int main() {
 	Server server;
-
 	server.listen(5623);
-	server.run();
-	return 0;
+	return server.run();
 }

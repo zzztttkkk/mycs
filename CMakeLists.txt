@@ -22,6 +22,7 @@ find_package(fmt CONFIG REQUIRED)
 set(Libs "${Libs};fmt::fmt")
 find_package(asio CONFIG REQUIRED)
 set(Libs "${Libs};asio;asio::asio")
+add_definitions(-DASIO_NO_DEPRECATED)
 
 function(cs_link_libs name)
 	target_link_libraries(${name} PUBLIC ${Libs})
