@@ -31,8 +31,7 @@ class Conn {
    private:
 	Server* server;
 	tcp::socket* sock = nullptr;
-	asio::streambuf buf;
-	std::string temp;
+	std::string linetemp;
 
    public:
 	Conn(Server* server, tcp::socket* sock) : server(server), sock(sock) {}
@@ -49,15 +48,18 @@ class Conn {
 
 	[[nodiscard]] const tcp::socket& socket() const { return *this->sock; }
 
-	bool read_message(Message* msg) {
-		this->buf.prepare(MYCS_SIMPLEHTTP_CONN_READBUF_INIT_SIZE);
+	bool read_message(asio::streambuf& readbuf, Message* msg, bool is_req = true) {
+		readbuf.prepare(MYCS_SIMPLEHTTP_CONN_READBUF_INIT_SIZE);
 		char status = 0;
 		size_t size = 0;
 		asio::error_code err;
 
+		std::string keytemp;
+		std::string valtemp;
+
 		// read first line and headers
 		while (status != 4) {
-			this->buf.consume(size);
+			readbuf.consume(size);
 			size = 0;
 			err.clear();
 
@@ -65,13 +67,13 @@ class Conn {
 				case 0:	 // read first line 1
 				case 1: {
 					// read first line 2
-					size = asio::read_until(*this->sock, this->buf, ' ', err);
+					size = asio::read_until(*this->sock, readbuf, ' ', err);
 					break;
 				}
 				case 2:	 // read first line 3
 				case 3: {
 					// read header lines
-					size = asio::read_until(*this->sock, this->buf, '\n', err);
+					size = asio::read_until(*this->sock, readbuf, '\n', err);
 					break;
 				}
 				default: {
@@ -85,40 +87,56 @@ class Conn {
 				case 0: {
 					// `request method` or `response protocol version`
 					if (size > 10) return false;
-					temp.clear();
-					temp.assign(static_cast<const char*>(this->buf.data().data()), size - 1);
-					if (!msg->fl1(temp)) return false;
+					linetemp.clear();
+					linetemp.assign(static_cast<const char*>(readbuf.data().data()), size - 1);
+
+					valtemp.clear();
+					uppercopy(valtemp, linetemp);
+
+					if (!msg->fl1(valtemp)) return false;
 					status++;
-					temp.clear();
+					linetemp.clear();
 					break;
 				}
 				case 1: {
 					// `request path` or `response status code`
-					// todo very long path
-					temp.append(static_cast<const char*>(this->buf.data().data()), size - 1);
-					if (!msg->fl2(temp)) return false;
+					linetemp.append(static_cast<const char*>(readbuf.data().data()), size - 1);
+					if (!msg->fl2(linetemp)) return false;
 					status++;
 					break;
 				}
 				case 2: {
 					// `request protocol version` or `response phrase`
 					if (size > 50) return false;
-					temp.clear();
-					temp.assign(static_cast<const char*>(this->buf.data().data()), size - 1);
-					if (!msg->fl3(temp)) return false;
+					linetemp.clear();
+					linetemp.assign(static_cast<const char*>(readbuf.data().data()), size - 2);
+
+					if (is_req) {
+						valtemp.clear();
+						uppercopy(valtemp, linetemp);
+						if (!msg->fl3(valtemp)) return false;
+					} else {
+						if (!msg->fl3(linetemp)) return false;
+					}
+
 					status++;
+					linetemp.clear();
 					break;
 				}
 				case 3: {
-					temp.clear();
-					temp.append(static_cast<const char*>(this->buf.data().data()), size - 2);
-					if (temp.empty()) {
+					linetemp.append(static_cast<const char*>(readbuf.data().data()), size - 2);
+					if (linetemp.empty()) {
 						status++;
 					} else {
-						auto idx = temp.find(':');
+						auto idx = linetemp.find(':');
 						if (idx == std::string::npos) return false;
-						const std::string& key = temp.substr(0, idx);
-						msg->_headers.append(key, temp.substr(idx + 1));
+
+						keytemp.clear();
+						trimlowercopy(keytemp, linetemp.substr(0, idx));
+						valtemp.clear();
+						trimcopy(valtemp, linetemp.substr(idx + 1));
+						msg->_headers.append(keytemp, valtemp);
+						linetemp.clear();
 					}
 					break;
 				}
@@ -133,7 +151,8 @@ class Conn {
 
 	void handle() {
 		Request req;
-		this->read_message(&req);
+		asio::streambuf buf(1024);
+		this->read_message(buf, &req);
 
 		asio::write(this->socket(), asio::buffer("HTTP/1.0 200 OK\r\nContent-Length: 12\r\n\r\nHello World!"));
 		delete (this);

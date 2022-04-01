@@ -5,6 +5,7 @@
 #pragma once
 
 #include <asio.hpp>
+#include <cctype>
 #include <functional>
 #include <memory>
 #include <string>
@@ -16,6 +17,12 @@ namespace mycs::simplehttp {
 #ifndef MYCS_SIMPLEHTTP_HEADERS_VECTOR_SIZE
 #define MYCS_SIMPLEHTTP_HEADERS_VECTOR_SIZE 12
 #endif
+
+void trimlowercopy(std::string& dist, const std::string& src);
+
+void trimcopy(std::string& dist, const std::string& src);
+
+void uppercopy(std::string& dist, const std::string& src);
 
 class Headers {
    private:

@@ -16,6 +16,7 @@
 #include "./conn.h"
 #include "./handler.h"
 #include "./message.h"
+#include "./version.h"
 
 namespace mycs::simplehttp {
 
@@ -43,6 +44,11 @@ class Server {
 		if (this->acceptor.has_value()) {
 			this->acceptor.value().close();
 		}
+	}
+
+	static const std::string& version() {
+		const static std::string v = fmt::format("{}{}", MYCS_SIMPLEHTTP_VERSION, ASIO_VERSION);
+		return v;
 	}
 
 	void listen(uint16_t port) {

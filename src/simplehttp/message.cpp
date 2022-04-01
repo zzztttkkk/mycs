@@ -6,6 +6,68 @@
 
 namespace mycs::simplehttp {
 
+void trimlowercopy(std::string& dist, const std::string& src) {
+	if (src.empty()) return;
+	size_t begin = 0;
+	size_t end = src.size() - 1;
+	char c;
+	while (begin <= end) {
+		c = src.at(begin);
+		if (std::isspace(c)) {
+			begin++;
+			continue;
+		}
+		break;
+	}
+
+	while (end >= begin) {
+		c = src.at(begin);
+		if (std::isspace(c)) {
+			end--;
+			continue;
+		}
+		break;
+	}
+
+	for (; begin <= end; begin++) {
+		dist.push_back(static_cast<char>(std::tolower(src[begin])));
+	}
+}
+
+void trimcopy(std::string& dist, const std::string& src) {
+	if (src.empty()) return;
+	size_t begin = 0;
+	size_t end = src.size() - 1;
+	char c;
+	while (begin <= end) {
+		c = src.at(begin);
+		if (std::isspace(c)) {
+			begin++;
+			continue;
+		}
+		break;
+	}
+
+	while (end >= begin) {
+		c = src.at(begin);
+		if (std::isspace(c)) {
+			end--;
+			continue;
+		}
+		break;
+	}
+
+	for (; begin <= end; begin++) {
+		dist.push_back(src[begin]);
+	}
+}
+
+void uppercopy(std::string& dist, const std::string& src) {
+	for (auto c : src) {
+		dist.push_back(static_cast<char>(std::toupper(c)));
+	}
+}
+
 const std::string& protocolversion2string(ProtocolVersion version) {
 	const static std::string io = "HTTP/1.0";
 	const static std::string ii = "HTTP/1.1";
@@ -30,7 +92,7 @@ const std::string& protocolversion2string(ProtocolVersion version) {
 
 ProtocolVersion string2protocolversion(const std::string& vstr) {
 	if (vstr.size() != 8) return ProtocolVersion::Unknown;
-	if (!vstr.compare(0, 5, "HTTP/")) return ProtocolVersion::Unknown;
+	if (vstr.compare(0, 5, "HTTP/") != 0) return ProtocolVersion::Unknown;
 	if (vstr[5] == '1') {
 		if (!vstr.compare(6, 2, ".1")) return ProtocolVersion::II;
 		if (!vstr.compare(6, 2, ".0")) return ProtocolVersion::IO;
@@ -80,7 +142,7 @@ const std::string& method2string(Method method) {
 		case Method::Patch: {
 			return patch;
 		}
-		case Method::Unknown: {
+		default: {
 			return unknown;
 		}
 	}
