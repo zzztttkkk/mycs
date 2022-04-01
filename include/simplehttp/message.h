@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "./opts.h"
+
 namespace mycs::simplehttp {
 
 #ifndef MYCS_SIMPLEHTTP_HEADERS_VECTOR_SIZE

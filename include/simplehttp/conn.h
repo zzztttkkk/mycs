@@ -23,33 +23,34 @@ namespace mycs::simplehttp {
 
 class Server;
 
-void do_remove_conn_from_server(Server* server, Conn* conn);
-
 class Conn {
 	using tcp = asio::ip::tcp;
 
    private:
+	friend class ServConnCtrlObj;
+
 	Server* server;
 	tcp::socket* sock = nullptr;
+	asio::streambuf* _readbuf = nullptr;
 	std::string linetemp;
 
-   public:
-	Conn(Server* server, tcp::socket* sock) : server(server), sock(sock) {}
+	class ConnGuard {
+	   private:
+		Conn* ptr;
 
-	virtual ~Conn() {
-		do_remove_conn_from_server(this->server, this);
-		if (this->sock) {
-			this->sock->close();
-			delete (this->sock);
-		}
-	}
+	   public:
+		explicit ConnGuard(Conn* c) : ptr(c) {}
 
-	tcp::socket& socket() { return *this->sock; }
+		~ConnGuard() { delete (this->ptr); }
+	};
 
-	[[nodiscard]] const tcp::socket& socket() const { return *this->sock; }
+	void create_readbuf();
 
-	bool read_message(asio::streambuf& readbuf, Message* msg, bool is_req = true) {
-		readbuf.prepare(MYCS_SIMPLEHTTP_CONN_READBUF_INIT_SIZE);
+	void close();
+
+	bool read_message(Message* msg, bool is_req = true) {
+		asio::streambuf& readbuf = *this->_readbuf;
+
 		char status = 0;
 		size_t size = 0;
 		asio::error_code err;
@@ -149,13 +150,31 @@ class Conn {
 		return true;
 	}
 
+   public:
+	Conn(Server* server, tcp::socket* sock) : server(server), sock(sock) {}
+
+	virtual ~Conn() {
+		this->close();
+		if (this->sock) {
+			this->sock->close();
+			delete (this->sock);
+		}
+		delete (this->_readbuf);
+	}
+
+	tcp::socket& socket() { return *this->sock; }
+
+	[[nodiscard]] const tcp::socket& socket() const { return *this->sock; }
+
 	void handle() {
+		auto _ = ConnGuard(this);
+
+		this->create_readbuf();
+
 		Request req;
-		asio::streambuf buf(1024);
-		this->read_message(buf, &req);
+		this->read_message(&req);
 
 		asio::write(this->socket(), asio::buffer("HTTP/1.0 200 OK\r\nContent-Length: 12\r\n\r\nHello World!"));
-		delete (this);
 	}
 };
 

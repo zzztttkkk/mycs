@@ -20,15 +20,11 @@
 
 namespace mycs::simplehttp {
 
-namespace {
-class ServConnCtrlObj;
-}
-
 class Server {
 	using tcp = asio::ip::tcp;
 
    private:
-	friend class ServConnCtrlObj;
+	friend class Conn;
 
 	std::shared_mutex mutex;
 	asio::io_context ctx;
@@ -36,6 +32,7 @@ class Server {
 	std::unordered_set<Conn*> alive;
 	bool running = false;
 	bool closed = false;
+	ProtocolOption option;
 
    public:
 	Server() { this->acceptor = std::nullopt; }
@@ -140,17 +137,5 @@ class Server {
 		return 0;
 	}
 };
-
-namespace {
-
-class ServConnCtrlObj {
-   public:
-	static void remove_conn(Server* server, Conn* conn) {
-		auto _ = std::lock_guard<std::shared_mutex>(server->mutex);
-		server->alive.erase(conn);
-	}
-};
-
-}  // namespace
 
 }  // namespace mycs::simplehttp
