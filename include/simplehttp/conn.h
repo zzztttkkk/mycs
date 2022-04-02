@@ -9,6 +9,8 @@
 #include <asio.hpp>
 #include <optional>
 
+#include "./buf.h"
+#include "./gzip.h"
 #include "./message.h"
 
 #ifndef MYCS_SIMPLEHTTP_CONN_READBUF_INIT_SIZE
