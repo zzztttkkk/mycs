@@ -212,16 +212,28 @@ class Message {
 	friend class Conn;
 
 	Headers _headers;
-	asio::streambuf rbuf;
-	asio::streambuf wbuf;
+	asio::streambuf* rbuf = nullptr;
+	asio::streambuf* wbuf = nullptr;
 
-	Message() = default;
+	Message(size_t rsize, size_t wsize) {
+		this->rbuf = new asio::streambuf(rsize);
+		this->wbuf = new asio::streambuf(wsize);
+	};
 
-	virtual ~Message() = default;
+	virtual ~Message() {
+		delete (this->rbuf);
+		delete (this->wbuf);
+	}
 
 	virtual bool fl1(const std::string&) = 0;
 	virtual bool fl2(const std::string&) = 0;
 	virtual bool fl3(const std::string&) = 0;
+
+	virtual void clear() {
+		this->_headers.clear();
+		this->rbuf->consume(this->rbuf->size());
+		this->wbuf->consume(this->wbuf->size());
+	}
 
    public:
 	Headers& headers() { return this->_headers; }
@@ -266,7 +278,14 @@ class Request : public Message {
 	}
 
    public:
-	Request() : Message() {}
+	Request(size_t rsize, size_t wsize) : Message(rsize, wsize) {}
+
+	void clear() override {
+		Message::clear();
+		this->_method = Method::Unknown;
+		this->_rawpath.clear();
+		this->_protocolversion = ProtocolVersion::Unknown;
+	}
 };
 
 }  // namespace mycs::simplehttp

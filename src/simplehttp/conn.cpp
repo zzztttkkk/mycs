@@ -7,19 +7,21 @@
 
 namespace mycs::simplehttp {
 
-void Conn::create_readbuf() {
-	asio::streambuf* buf;
-	if (server->option.MaxMessageLineSize > 0) {
-		buf = new asio::streambuf(server->option.MaxMessageLineSize);
-	} else {
-		buf = new asio::streambuf();
-	}
-	this->_readbuf = buf;
-}
-
 void Conn::close() {
 	auto _ = std::lock_guard<std::shared_mutex>(server->mutex);
 	server->alive.erase(this);
+}
+
+void Conn::handle() {
+	auto _ = ConnGuard(this);
+	readbuf.prepare(MYCS_SIMPLEHTTP_CONN_READBUF_INIT_SIZE);
+
+	auto opt = &this->server->option;
+
+	Request req(opt->MaxRequestBodySize, opt->MaxResponseBodySize);
+	this->read_message(&req);
+
+	asio::write(this->socket(), asio::buffer("HTTP/1.0 200 OK\r\nContent-Length: 12\r\n\r\nHello World!"));
 }
 
 }  // namespace mycs::simplehttp

@@ -8,8 +8,10 @@ namespace mycs::simplehttp {
 
 struct ProtocolOption {
    public:
-	int MaxMessageLineSize = 0;
-	int MaxMessageBodySize = 0;
+	int MaxUrlSize = 0;
+	int MaxHeaderLineSize = 0;
+	int MaxRequestBodySize = 0;
+	int MaxResponseBodySize = 0;
 	int MaxAliveSeconds = 0;
 };
 
