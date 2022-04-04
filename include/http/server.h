@@ -18,7 +18,7 @@
 #include "./message.h"
 #include "./version.h"
 
-namespace mycs::simplehttp {
+namespace mycs::http {
 
 class Server {
 	using tcp = asio::ip::tcp;
@@ -138,4 +138,4 @@ class Server {
 	}
 };
 
-}  // namespace mycs::simplehttp
+}  // namespace mycs::http

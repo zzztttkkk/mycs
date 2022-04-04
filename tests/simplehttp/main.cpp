@@ -4,7 +4,7 @@
 
 #include <mycs.hpp>
 
-using namespace mycs::simplehttp;
+using namespace mycs::http;
 
 int main() {
 	Server server;

@@ -14,7 +14,7 @@
 
 #include "./opts.h"
 
-namespace mycs::simplehttp {
+namespace mycs::http {
 
 #ifndef MYCS_SIMPLEHTTP_HEADERS_VECTOR_SIZE
 #define MYCS_SIMPLEHTTP_HEADERS_VECTOR_SIZE 12
@@ -288,4 +288,4 @@ class Request : public Message {
 	}
 };
 
-}  // namespace mycs::simplehttp
+}  // namespace mycs::http

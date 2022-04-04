@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace mycs::simplehttp {
+namespace mycs::http {
 
 class BaseHandler {
 public:

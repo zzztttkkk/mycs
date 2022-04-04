@@ -21,7 +21,7 @@
 #error "MYCS_SIMPLEHTTP_CONN_READBUF_INIT_SIZE must >= 128"
 #endif
 
-namespace mycs::simplehttp {
+namespace mycs::http {
 
 class Server;
 
@@ -164,4 +164,4 @@ class Conn {
 	void handle();
 };
 
-}  // namespace mycs::simplehttp
+}  // namespace mycs::http

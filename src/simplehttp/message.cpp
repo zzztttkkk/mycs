@@ -2,9 +2,9 @@
 // Created by ztk on 2022/3/29.
 //
 
-#include <simplehttp/message.h>
+#include <http/message.h>
 
-namespace mycs::simplehttp {
+namespace mycs::http {
 
 void trimlowercopy(std::string& dist, const std::string& src) {
 	if (src.empty()) return;
@@ -202,4 +202,4 @@ Method string2method(const std::string& m) {
 	return Method::Unknown;
 }
 
-}  // namespace mycs::simplehttp
+}  // namespace mycs::http

@@ -8,7 +8,7 @@
 
 #include <zlib.h>
 
-namespace mycs::simplehttp::gzip {
+namespace mycs::http::gzip {
 
 class Compression {
    private:
@@ -56,4 +56,4 @@ class Compression {
 	inline void write(const std::string& val) { return write(val.c_str(), val.size()); }
 };
 
-}  // namespace mycs::simplehttp::gzip
+}  // namespace mycs::http::gzip

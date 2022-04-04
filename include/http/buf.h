@@ -6,7 +6,7 @@
 
 #include <asio.hpp>
 
-namespace mycs::simplehttp {
+namespace mycs::http {
 
 class StreamBuf {
    private:
@@ -15,4 +15,4 @@ class StreamBuf {
 	void write() {}
 };
 
-}  // namespace mycs::simplehttp
+}  // namespace mycs::http

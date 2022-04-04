@@ -4,7 +4,7 @@
 
 #pragma once
 
-namespace mycs::simplehttp {
+namespace mycs::http {
 
 struct ProtocolOption {
    public:
@@ -15,4 +15,4 @@ struct ProtocolOption {
 	int MaxAliveSeconds = 0;
 };
 
-}  // namespace mycs::simplehttp
+}  // namespace mycs::http

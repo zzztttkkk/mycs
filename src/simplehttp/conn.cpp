@@ -2,10 +2,10 @@
 // Created by ztk on 2022/3/31.
 //
 
-#include <simplehttp/conn.h>
-#include <simplehttp/server.h>
+#include <http/conn.h>
+#include <http/server.h>
 
-namespace mycs::simplehttp {
+namespace mycs::http {
 
 void Conn::close() {
 	auto _ = std::lock_guard<std::shared_mutex>(server->mutex);
@@ -24,4 +24,4 @@ void Conn::handle() {
 	asio::write(this->socket(), asio::buffer("HTTP/1.0 200 OK\r\nContent-Length: 12\r\n\r\nHello World!"));
 }
 
-}  // namespace mycs::simplehttp
+}  // namespace mycs::http
