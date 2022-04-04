@@ -2,8 +2,8 @@
 // Created by ztk on 2022/3/31.
 //
 
-#include <iostream>
-#include <simplehttp.hpp>
+#include <simplehttp/conn.h>
+#include <simplehttp/server.h>
 
 namespace mycs::simplehttp {
 
