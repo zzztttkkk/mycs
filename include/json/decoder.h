@@ -17,8 +17,26 @@ class Decoder {
 	std::string temp;
 	std::string keytemp;
 
+	bool _done = false;
+	Value* result = nullptr;
 	bool skipws = true;	 // skip white space
 	bool instring = false;
+	bool escaped = false;
+	bool isstring = false;
+
+	bool on_map_begin();
+
+	bool on_map_end();
+
+	bool on_array_begin();
+
+	bool on_array_end();
+
+	bool on_value_sep();
+
+	bool on_kv_sep();
+
+	bool on_value_done(Value* val) { return true; }
 
    public:
 	Decoder() = default;
@@ -31,7 +49,60 @@ class Decoder {
 		}
 	}
 
-	bool feed(char c);
+	bool feed(char c) {
+		if (skipws) {
+			if (std::isspace(c)) return true;
+			skipws = false;
+		}
+
+		if (escaped) {
+			temp.push_back(c);
+			escaped = false;
+			return true;
+		}
+
+		if (c == '\\') {
+			escaped = true;
+			return true;
+		}
+
+		switch (c) {
+			case '"': {
+				if (instring) {
+					instring = false;
+					skipws = true;
+					isstring = true;
+					return true;
+				}
+				instring = true;
+				skipws = false;
+				temp.clear();
+				return false;
+			}
+			case '{': {
+				return on_map_begin();
+			}
+			case '}': {
+				return on_map_end();
+			}
+			case '[': {
+				return on_array_begin();
+			}
+			case ']': {
+				return on_array_end();
+			}
+			case ',': {
+				return on_value_sep();
+			}
+			case ':': {
+				return on_kv_sep();
+			}
+			default: {
+				temp.push_back(c);
+				return true;
+			}
+		}
+	}
 
 	bool feed(const char* p, size_t s) {
 		for (int i = 0; i < s; ++i) {
