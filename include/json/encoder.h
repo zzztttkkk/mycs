@@ -31,6 +31,7 @@ class Encoder {
 	explicit Encoder(std::ostream& s) { ostream = &s; }
 
 	bool encode(const Value& val) {
+		buf.clear();
 		switch (val.type()) {
 			case Type::String: {
 				encode_string(val.string());
@@ -64,6 +65,11 @@ class Encoder {
 	}
 
 	bool encode(const Value* val) { return encode(*val); }
+
+	void reset(std::ostream& s) {
+		buf.clear();
+		ostream = &s;
+	}
 };
 
 }  // namespace mycs::json
