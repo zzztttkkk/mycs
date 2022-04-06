@@ -5,11 +5,13 @@
 #pragma once
 
 #include <cmath>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace mycs::json {
@@ -46,9 +48,10 @@ class Value {
 
 	explicit Value(Type t) : t(t) {}
 
+	static void free_value(Value*);
+
    public:
 	[[nodiscard]] inline Type type() const { return t; }
-	[[nodiscard]] bool is_none() const;
 
 #define MakeJsonValueTypeCastMethod(T, n)                                       \
 	[[nodiscard]] virtual const T& n() const { throw std::runtime_error(""); }; \
@@ -96,23 +99,85 @@ class ArrayValue : public Value {
    private:
 	friend class Decoder;
 	friend class Encoder;
+	typedef std::vector<Value*> Vec;
 
-	std::vector<std::shared_ptr<Value>> _data;
+	Vec _data;
+
+	template <class VecIter, bool IsConst>
+	class IterBase {
+	   private:
+		VecIter raw;
+
+	   public:
+		explicit IterBase(VecIter raw) : raw(std::move(raw)) {}
+
+		IterBase& operator++() {
+			this->raw++;
+			return *this;
+		}
+
+		IterBase& operator--() {
+			this->raw--;
+			return *this;
+		}
+
+		IterBase& operator+(int n) {
+			this->raw += n;
+			return *this;
+		}
+
+		IterBase& operator-(int n) {
+			this->raw -= n;
+			return *this;
+		}
+
+		bool operator==(const VecIter& another) const { return this->raw == another.raw; }
+
+		template <bool WasConst = IsConst, typename = std::enable_if<WasConst>>
+		const Value* operator*() {
+			return this->raw.operator*();
+		}
+
+		template <bool WasConst = IsConst, typename = std::enable_if<!WasConst>>
+		Value* operator*() {
+			return this->raw.operator*();
+		}
+	};
 
    public:
 	ArrayValue() : Value(Type::Array) {}
+	virtual ~ArrayValue() {
+		for (auto item : _data) Value::free_value(item);
+	}
+
 	[[nodiscard]] const ArrayValue& array() const override { return *this; }
 	ArrayValue& array() override { return *this; }
 
-	void push(Value* v) { _data.push_back(std::shared_ptr<Value>(v)); }
+	void push(Value* v) { _data.push_back(v); }
 
-	void push(const std::shared_ptr<Value>& v) { _data.push_back(v); }
+	Value* at(size_t idx) { return _data.at(idx); }
 
-	std::shared_ptr<Value> at(size_t idx) { return std::move(_data.at(idx)); }
-
-	[[nodiscard]] std::shared_ptr<const Value> at(size_t idx) const { return _data.at(idx); }
+	[[nodiscard]] const Value* at(size_t idx) const { return _data.at(idx); }
 
 	[[nodiscard]] size_t size() const { return _data.size(); }
+
+	typedef IterBase<Vec::iterator, false> Iter;
+	typedef IterBase<Vec::reverse_iterator, false> RIter;
+	typedef IterBase<Vec::const_iterator, true> ConstIter;
+	typedef IterBase<Vec::const_reverse_iterator, true> ConstRIter;
+
+#define MakeIter(name, T) \
+	T name() { return T(_data.name()); }
+
+	MakeIter(begin, Iter);
+	MakeIter(end, Iter);
+	MakeIter(cbegin, ConstIter);
+	MakeIter(cend, ConstIter);
+	MakeIter(rbegin, RIter);
+	MakeIter(rend, RIter);
+	MakeIter(crbegin, ConstRIter);
+	MakeIter(crend, ConstRIter);
+#undef MakeIter
 };
 
 class MapValue : public Value {
@@ -120,16 +185,18 @@ class MapValue : public Value {
 	friend class Decoder;
 	friend class Encoder;
 
-	std::unordered_map<std::string, std::shared_ptr<Value>> _data;
+	std::unordered_map<std::string, Value*> _data;
 
    public:
 	MapValue() : Value(Type::Map) {}
+	virtual ~MapValue() {
+		for (const auto& pair : _data) Value::free_value(pair.second);
+	}
+
 	[[nodiscard]] const MapValue& map() const override { return *this; }
 	MapValue& map() override { return *this; }
 
-	void insert(const std::string& key, Value* val) { _data.insert(std::make_pair(key, std::shared_ptr<Value>(val))); }
-
-	void insert(const std::string& key, const std::shared_ptr<Value>& val) { _data.insert(std::make_pair(key, val)); }
+	void insert(const std::string& key, Value* val) { _data.insert(std::make_pair(key, val)); }
 
 	void erase(const std::string& key) { _data.erase(key); }
 
@@ -137,27 +204,41 @@ class MapValue : public Value {
 };
 
 namespace {
+
+class NoneBoolNew;
+
 class NoneValue : public Value {
-   public:
+   private:
+	friend class NoneBoolNew;
 	NoneValue() : Value(Type::None) {}
+
+   public:
+	inline void operator delete(void*) {}  // NOLINT
 };
 
 class BoolValue : public Value {
    private:
+	friend class NoneBoolNew;
 	bool _data = false;
-
-   public:
 	BoolValue() : Value(Type::Bool) {}
-
 	explicit BoolValue(bool v) : Value(Type::Bool) { _data = v; }
 
-	explicit operator bool() const { return false; }
+   public:
+	explicit operator bool() const { return _data; }
+
+	inline void operator delete(void*) {}  // NOLINT
+};
+
+class NoneBoolNew {
+   public:
+	static NoneValue* none() { return new NoneValue(); }
+	static BoolValue* boolean(bool v) { return new BoolValue(v); }
 };
 
 }  // namespace
 
-const static Value None = NumberValue();		   // NOLINT
-const static Value True = BoolValue(true);		   // NOLINT
-const static Value* False = new BoolValue(false);  // NOLINT
+static NoneValue* const None = NoneBoolNew::none();			  // NOLINT
+static BoolValue* const True = NoneBoolNew::boolean(true);	  // NOLINT
+static BoolValue* const False = NoneBoolNew::boolean(false);  // NOLINT
 
 }  // namespace mycs::json

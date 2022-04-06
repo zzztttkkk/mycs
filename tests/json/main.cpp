@@ -9,13 +9,13 @@
 using namespace mycs::json;
 
 int main() {
-	NumberValue v(12.96);
-	std::cout << v.integer() << std::endl;
-	std::cout << v.is_none() << std::endl;
-
-	if (False) {
-		std::cout << "AA" << std::endl;
+	ArrayValue ary;
+	for (int i = 0; i < 10; ++i) {
+		ary.push(False);
 	}
-
+	delete (None);
+	delete (None);
+	delete (False);
+	delete (True);
 	return 0;
 }
