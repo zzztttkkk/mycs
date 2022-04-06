@@ -44,6 +44,9 @@ class Encoder;
 
 class Value {
    protected:
+	friend class Decoder;
+	friend class Encoder;
+
 	Type t;
 
 	explicit Value(Type t) : t(t) {}
