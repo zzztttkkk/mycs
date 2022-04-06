@@ -93,7 +93,8 @@ class NumberValue : public Value {
 		_data = v;
 		this->is_int = is_int;
 	}
-	explicit NumberValue(int64_t v) : Value(Type::Number) {
+	template <typename T, typename = std::enable_if<std::is_integral<T>::value>>
+	explicit NumberValue(T v) : Value(Type::Number) {
 		_data = static_cast<double>(v);
 		is_int = true;
 	};
