@@ -23,7 +23,7 @@ enum class Type : unsigned char {
 	Number,
 	Array,
 	Map,
-	None,
+	Null,
 };
 
 class StringValue;
@@ -35,7 +35,7 @@ class ArrayValue;
 class MapValue;
 
 namespace {
-class NoneValue;
+class NullValue;
 class BoolValue;
 }  // namespace
 
@@ -85,10 +85,18 @@ class NumberValue : public Value {
 	friend class Encoder;
 
 	double _data = 0;
+	bool is_int = false;
 
    public:
 	NumberValue() : Value(Type::Number) {}
-	explicit NumberValue(double v) : Value(Type::Number) { _data = v; }
+	explicit NumberValue(double v, bool is_int = false) : Value(Type::Number) {
+		_data = v;
+		this->is_int = is_int;
+	}
+	explicit NumberValue(int64_t v) : Value(Type::Number) {
+		_data = static_cast<double>(v);
+		is_int = true;
+	};
 	[[nodiscard]] const NumberValue& number() const override { return *this; }
 	NumberValue& number() override { return *this; }
 
@@ -161,6 +169,8 @@ class ArrayValue : public Value {
 
 	[[nodiscard]] size_t size() const { return _data.size(); }
 
+	[[nodiscard]] bool empty() const { return _data.empty(); }
+
 	typedef IterBase<Vec::iterator, false> Iter;
 	typedef IterBase<Vec::reverse_iterator, false> RIter;
 	typedef IterBase<Vec::const_iterator, true> ConstIter;
@@ -184,8 +194,50 @@ class MapValue : public Value {
    private:
 	friend class Decoder;
 	friend class Encoder;
+	typedef std::unordered_map<std::string, Value*> Map;
 
-	std::unordered_map<std::string, Value*> _data;
+	Map _data;
+
+	template <class MapIter, bool IsConst>
+	class IterBase {
+	   private:
+		MapIter raw;
+
+	   public:
+		explicit IterBase(MapIter raw) : raw(std::move(raw)) {}
+
+		IterBase& operator++() {
+			this->raw++;
+			return *this;
+		}
+
+		IterBase& operator--() {
+			this->raw--;
+			return *this;
+		}
+
+		IterBase& operator+(int n) {
+			this->raw += n;
+			return *this;
+		}
+
+		IterBase& operator-(int n) {
+			this->raw -= n;
+			return *this;
+		}
+
+		bool operator==(const MapIter& another) const { return this->raw == another.raw; }
+
+		template <bool WasConst = IsConst, typename = std::enable_if<WasConst>>
+		std::pair<const std::string&, const Value*> operator*() {
+			return this->raw.operator*();
+		}
+
+		template <bool WasConst = IsConst, typename = std::enable_if<!WasConst>>
+		std::pair<const std::string&, Value*> operator*() {
+			return this->raw.operator*();
+		}
+	};
 
    public:
 	MapValue() : Value(Type::Map) {}
@@ -201,16 +253,28 @@ class MapValue : public Value {
 	void erase(const std::string& key) { _data.erase(key); }
 
 	[[nodiscard]] size_t size() const { return _data.size(); }
+
+	typedef IterBase<Map::iterator, false> Iter;
+	typedef IterBase<Map::const_iterator, true> ConstIter;
+
+#define MakeIter(name, T) \
+	T name() { return T(_data.name()); }
+
+	MakeIter(begin, Iter);
+	MakeIter(end, Iter);
+	MakeIter(cbegin, ConstIter);
+	MakeIter(cend, ConstIter);
+#undef MakeIter
 };
 
 namespace {
 
-class NoneBoolNew;
+class NullBoolNew;
 
-class NoneValue : public Value {
+class NullValue : public Value {
    private:
-	friend class NoneBoolNew;
-	NoneValue() : Value(Type::None) {}
+	friend class NullBoolNew;
+	NullValue() : Value(Type::Null) {}
 
    public:
 	inline void operator delete(void*) {}  // NOLINT
@@ -218,27 +282,30 @@ class NoneValue : public Value {
 
 class BoolValue : public Value {
    private:
-	friend class NoneBoolNew;
+	friend class NullBoolNew;
+	friend class mycs::json::Decoder;
+	friend class mycs::json::Encoder;
 	bool _data = false;
 	BoolValue() : Value(Type::Bool) {}
 	explicit BoolValue(bool v) : Value(Type::Bool) { _data = v; }
 
    public:
-	explicit operator bool() const { return _data; }
+	[[nodiscard]] const BoolValue& boolean() const override { return *this; }
+	BoolValue& boolean() override { return *this; }
 
 	inline void operator delete(void*) {}  // NOLINT
 };
 
-class NoneBoolNew {
+class NullBoolNew {
    public:
-	static NoneValue* none() { return new NoneValue(); }
+	static NullValue* none() { return new NullValue(); }
 	static BoolValue* boolean(bool v) { return new BoolValue(v); }
 };
 
 }  // namespace
 
-static NoneValue* const None = NoneBoolNew::none();			  // NOLINT
-static BoolValue* const True = NoneBoolNew::boolean(true);	  // NOLINT
-static BoolValue* const False = NoneBoolNew::boolean(false);  // NOLINT
+static NullValue* const Null = NullBoolNew::none();			  // NOLINT
+static BoolValue* const True = NullBoolNew::boolean(true);	  // NOLINT
+static BoolValue* const False = NullBoolNew::boolean(false);  // NOLINT
 
 }  // namespace mycs::json

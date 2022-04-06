@@ -8,7 +8,7 @@ namespace mycs::json {
 
 void Value::free_value(Value* val) {
 	switch (val->type()) {
-		case Type::None: {
+		case Type::Null: {
 		}
 		case Type::Bool: {
 			return;
