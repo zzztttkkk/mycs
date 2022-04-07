@@ -5,7 +5,8 @@ project(mycs)
 set(CMAKE_CXX_STANDARD 20)
 
 if (${MSVC})
-	add_compile_options(/utf-8)
+	# https://youtrack.jetbrains.com/issue/CPP-27864
+	add_compile_options(/utf-8 /wd4005)
 	add_definitions(-D_WIN32_WINNT=0x0601 -D__cpp_lib_coroutine)
 endif ()
 
