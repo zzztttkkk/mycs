@@ -56,6 +56,8 @@ class Value {
    public:
 	[[nodiscard]] inline Type type() const { return t; }
 
+	[[nodiscard]] inline bool is_null() const { return t == Type::Null; }
+
 #define MakeJsonValueTypeCastMethod(T, n)                                       \
 	[[nodiscard]] virtual const T& n() const { throw std::runtime_error(""); }; \
 	virtual T& n() { throw std::runtime_error(""); }
