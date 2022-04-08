@@ -2,10 +2,7 @@
 // Created by ztk on 2022/4/4.
 //
 
-#include <mycs/json/decoder.h>
-#include <mycs/json/encoder.h>
-
-#include <iostream>
+#include <mycs.hpp>
 
 using namespace mycs::json;
 
