@@ -7,6 +7,7 @@
 #include <iostream>
 #include <stack>
 
+#include "../_utils/index.h"
 #include "./value.h"
 
 namespace mycs::json {
@@ -15,10 +16,12 @@ class Decoder {
    private:
 	std::stack<Value*> stack;
 	std::string temp;
+
 	std::string keytemp;
+	bool keytempisactive = false;
 
 	bool _done = false;
-	Value* result = nullptr;
+	Value* _result = nullptr;
 	bool skipws = true;	 // skip white space
 	bool instring = false;
 	bool escaped = false;
@@ -36,7 +39,7 @@ class Decoder {
 
 	bool on_kv_sep();
 
-	bool on_value_done(Value* val) { return true; }
+	bool on_value_done(Value* val);
 
    public:
 	Decoder() = default;
@@ -50,6 +53,8 @@ class Decoder {
 	}
 
 	bool feed(char c) {
+		if (_done) return false;
+
 		if (skipws) {
 			if (std::isspace(c)) return true;
 			skipws = false;
@@ -77,7 +82,7 @@ class Decoder {
 				instring = true;
 				skipws = false;
 				temp.clear();
-				return false;
+				return true;
 			}
 			case '{': {
 				return on_map_begin();
@@ -112,6 +117,8 @@ class Decoder {
 	}
 
 	bool feed(const std::string& s) { return feed(s.c_str(), s.size()); }
+
+	Value* result() { return _result; }
 };
 
 }  // namespace mycs::json
