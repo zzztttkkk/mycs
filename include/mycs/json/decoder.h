@@ -15,7 +15,9 @@ namespace mycs::json {
 class Decoder {
    private:
 	std::stack<Value*> stack;
+
 	std::string temp;
+	bool tempisactive = false;
 
 	std::string keytemp;
 	bool keytempisactive = false;
@@ -40,6 +42,11 @@ class Decoder {
 	bool on_kv_sep();
 
 	bool on_value_done(Value* val);
+
+	inline void clear_temp() {
+		this->temp.clear();
+		this->tempisactive = false;
+	}
 
    public:
 	Decoder() = default;
@@ -79,9 +86,9 @@ class Decoder {
 					isstring = true;
 					return true;
 				}
+				if (tempisactive) return false;
 				instring = true;
 				skipws = false;
-				temp.clear();
 				return true;
 			}
 			case '{': {

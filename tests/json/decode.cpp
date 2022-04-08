@@ -6,7 +6,7 @@
 
 int main() {
 	mycs::json::Decoder decoder;
-	decoder.feed("[123, \"hello\"]");
+	decoder.feed(R"({"a":"""b":45})");
 	if (decoder.result()) {
 		mycs::json::Encoder encoder(std::cout);
 		encoder.encode(decoder.result());

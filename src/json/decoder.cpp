@@ -9,7 +9,6 @@
 namespace mycs::json {
 
 bool Decoder::on_map_begin() {
-	temp.clear();
 	skipws = true;
 	auto mv = new MapValue();
 	stack.push(mv);
@@ -27,7 +26,6 @@ bool Decoder::on_map_end() {
 }
 
 bool Decoder::on_array_begin() {
-	temp.clear();
 	skipws = true;
 	auto av = new ArrayValue();
 	stack.push(av);
@@ -47,6 +45,7 @@ bool Decoder::on_array_end() {
 bool Decoder::on_value_sep() {
 	skipws = true;
 	if (isstring) {
+		isstring = false;
 		auto sv = new StringValue(temp);
 		// todo unicode
 		return on_value_done(sv);
@@ -58,7 +57,7 @@ bool Decoder::on_value_sep() {
 
 	switch (temp.length()) {
 		case 0:
-			return false;
+			return !keytempisactive;
 		case 4: {
 			if (temp == null) return on_value_done(Null);
 			if (temp == t) return on_value_done(True);
@@ -70,42 +69,28 @@ bool Decoder::on_value_sep() {
 		}
 	}
 
-	int begin = 0;
-	for (char c : temp) {
-		begin++;
-		if (std::isspace(c)) continue;
-		begin--;
-		break;
-	}
-	int end = static_cast<int>(temp.size() - 1);
-	for (; end > begin; end--) {
-		char c = temp[end];
-		if (std::isspace(c)) continue;
-		end++;
-		break;
-	}
-
-	if (begin >= end) return false;
-
 	char* endPtr = nullptr;
-	double v = std::strtod(temp.data() + begin, &endPtr);
-	if (errno != 0 || endPtr != temp.data() + end) return false;
+	double v = std::strtod(temp.data(), &endPtr);
+	if (errno != 0 || endPtr != temp.data() + temp.size()) return false;
 	bool is_int = temp.find('.') == std::string::npos;
-	temp.clear();
 	return on_value_done(new NumberValue(v, is_int));
 }
 
 bool Decoder::on_kv_sep() {
 	if (!isstring) return false;
+	if (stack.empty() || stack.top()->type() != Type::Map) return false;
+
 	keytemp = temp;
 	keytempisactive = true;
 	isstring = false;
 	skipws = true;
-	temp.clear();
+	clear_temp();
 	return true;
 }
 
 bool Decoder::on_value_done(Value* val) {
+	clear_temp();
+
 	if (stack.empty()) {
 		_done = true;
 		_result = val;
