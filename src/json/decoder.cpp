@@ -13,19 +13,15 @@ bool Decoder::on_map_begin() {
 	skipws = true;
 	auto mv = new MapValue();
 	stack.push(mv);
-	Fmtp("New: {}\r\n", (void*)(mv));
 	return true;
 }
 
 bool Decoder::on_map_end() {
 	if (stack.empty()) return false;
-
-	if (keytempisactive) on_value_sep();
-
 	skipws = true;
 	Value* ele = stack.top();
-	Fmtp("Peek: {}\r\n", (void*)(ele));
 	if (ele->type() != Type::Map) return false;
+	if (!on_value_sep()) return false;
 	stack.pop();
 	return on_value_done(ele);
 }
@@ -43,6 +39,7 @@ bool Decoder::on_array_end() {
 	skipws = true;
 	auto ele = stack.top();
 	if (ele->type() != Type::Array) return false;
+	if (!on_value_sep()) return false;
 	stack.pop();
 	return on_value_done(ele);
 }
@@ -73,8 +70,26 @@ bool Decoder::on_value_sep() {
 		}
 	}
 
-	double v = std::strtod(temp.c_str(), nullptr);
-	if (errno != 0) return false;
+	int begin = 0;
+	for (char c : temp) {
+		begin++;
+		if (std::isspace(c)) continue;
+		begin--;
+		break;
+	}
+	int end = static_cast<int>(temp.size() - 1);
+	for (; end > begin; end--) {
+		char c = temp[end];
+		if (std::isspace(c)) continue;
+		end++;
+		break;
+	}
+
+	if (begin >= end) return false;
+
+	char* endPtr = nullptr;
+	double v = std::strtod(temp.data() + begin, &endPtr);
+	if (errno != 0 || endPtr != temp.data() + end) return false;
 	bool is_int = temp.find('.') == std::string::npos;
 	temp.clear();
 	return on_value_done(new NumberValue(v, is_int));
@@ -101,8 +116,7 @@ bool Decoder::on_value_done(Value* val) {
 	switch (ele->type()) {
 		case Type::Map: {
 			if (!keytempisactive) return false;
-			auto mv = ele->map();
-			Fmtp("Insert: {}\r\n", (void*)(&mv));
+			auto& mv = ele->map();
 			mv.insert(keytemp, val);
 			keytempisactive = false;
 			keytemp.clear();
@@ -110,7 +124,7 @@ bool Decoder::on_value_done(Value* val) {
 		}
 		case Type::Array: {
 			if (keytempisactive) return false;
-			auto av = ele->array();
+			auto& av = ele->array();
 			av.push(val);
 			return true;
 		}
