@@ -69,17 +69,6 @@ class Decoder {
 		dist.push_back(static_cast<char>(0x80 | (v & 0x3f)));
 	}
 
-   public:
-	Decoder() = default;
-
-	virtual ~Decoder() {
-		while (!stack.empty()) {
-			auto ele = stack.top();
-			Value::free_value(ele);
-			stack.pop();
-		}
-	}
-
 	bool feed(char c) {
 		if (_done) return false;
 
@@ -144,6 +133,7 @@ class Decoder {
 				return on_kv_sep();
 			}
 			default: {
+				tempisactive = true;
 				temp.push_back(c);
 				if (unicodestatus > 0) {
 					unicodestatus++;
@@ -172,7 +162,43 @@ class Decoder {
 
 	bool feed(const std::string& s) { return feed(s.c_str(), s.size()); }
 
-	Value* result() { return _result; }
+   public:
+	Decoder() = default;
+
+	virtual ~Decoder() {
+		while (!stack.empty()) {
+			auto ele = stack.top();
+			Value::free_value(ele);
+			stack.pop();
+		}
+	}
+
+	Value* decode(const std::string& txt) {
+		if (!feed(txt)) return nullptr;
+		if (_result) return _result;
+		if (!on_value_sep()) return nullptr;
+		return _result;
+	}
+
+	Value* decode(std::istream& input, char* buf, std::streamsize bufsize) {
+		while (true) {
+			if (!input.read(buf, bufsize)) {
+				if (input.eof()) break;
+				return nullptr;
+			}
+			auto size = input.gcount();
+			if (size < 1) continue;
+			if (!feed(buf, size)) return nullptr;
+		}
+		if (_result) return _result;
+		if (!on_value_sep()) return nullptr;
+		return _result;
+	}
+
+	Value* decode(std::istream& input) {
+		char buf[512];
+		return decode(input, buf, 512);
+	}
 };
 
 }  // namespace mycs::json

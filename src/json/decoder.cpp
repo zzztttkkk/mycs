@@ -43,6 +43,8 @@ bool Decoder::on_array_end() {
 }
 
 bool Decoder::on_value_sep() {
+	if (!tempisactive) return false;
+
 	skipws = true;
 	if (isstring) {
 		if (unicodestatus != 0) return false;
