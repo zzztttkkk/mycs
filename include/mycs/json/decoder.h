@@ -145,16 +145,18 @@ class Decoder {
 			}
 			default: {
 				temp.push_back(c);
-				if (unicodestatus > 0) unicodestatus++;
-				if (unicodestatus == 5) {
-					unicodestatus = 0;
-					const std::string& val = temp.substr(temp.size() - 4);
+				if (unicodestatus > 0) {
+					unicodestatus++;
+					if (unicodestatus == 5) {
+						unicodestatus = 0;
+						const std::string& val = temp.substr(temp.size() - 4);
 
-					char* endPtr = nullptr;
-					uint64_t v = std::strtoull(val.data(), &endPtr, 16);
-					if (errno != 0 || endPtr != val.data() + 4) return false;
-					temp.erase(temp.size() - 4, 4);
-					Decoder::uint64_to_unicode(temp, v);
+						char* endPtr = nullptr;
+						uint64_t v = std::strtoull(val.data(), &endPtr, 16);
+						if (errno != 0 || endPtr != val.data() + 4) return false;
+						temp.erase(temp.size() - 4, 4);
+						Decoder::uint64_to_unicode(temp, v);
+					}
 				}
 				return true;
 			}
