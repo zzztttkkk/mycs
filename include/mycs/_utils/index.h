@@ -9,3 +9,9 @@
 #include <iostream>
 
 #define Fmtp(...) fmt::print(__VA_ARGS__)
+
+#ifdef _WINDOWS
+#define InitConsole() SetConsoleOutputCP(CP_UTF8)
+#else
+#define InitConsole()
+#endif

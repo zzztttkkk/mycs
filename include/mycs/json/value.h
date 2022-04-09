@@ -14,6 +14,8 @@
 #include <utility>
 #include <vector>
 
+#include "../_utils/index.h"
+
 namespace mycs::json {
 
 enum class Type : unsigned char {
@@ -284,6 +286,8 @@ class NullValue : public Value {
 
    public:
 	inline void operator delete(void*) {}  // NOLINT
+
+	explicit operator bool() const { return false; }
 };
 
 class BoolValue : public Value {
@@ -298,8 +302,9 @@ class BoolValue : public Value {
    public:
 	[[nodiscard]] const BoolValue& boolean() const override { return *this; }
 	BoolValue& boolean() override { return *this; }
-
 	inline void operator delete(void*) {}  // NOLINT
+
+	explicit operator bool() const { return _data; }
 };
 
 class NullBoolNew {

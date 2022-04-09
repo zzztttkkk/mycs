@@ -45,10 +45,9 @@ bool Decoder::on_array_end() {
 bool Decoder::on_value_sep() {
 	skipws = true;
 	if (isstring) {
+		if (unicodestatus != 0) return false;
 		isstring = false;
-		auto sv = new StringValue(temp);
-		// todo unicode
-		return on_value_done(sv);
+		return on_value_done(new StringValue(temp));
 	}
 
 	const static std::string null = "null";

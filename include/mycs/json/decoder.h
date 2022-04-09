@@ -17,7 +17,7 @@ class Decoder {
 	std::stack<Value*> stack;
 
 	std::string temp;
-	bool tempisactive = false;
+	bool tempisactive = false;	// a flag for empty string value
 
 	std::string keytemp;
 	bool keytempisactive = false;
@@ -28,6 +28,7 @@ class Decoder {
 	bool instring = false;
 	bool escaped = false;
 	bool isstring = false;
+	char unicodestatus = 0;
 
 	bool on_map_begin();
 
@@ -46,6 +47,26 @@ class Decoder {
 	inline void clear_temp() {
 		this->temp.clear();
 		this->tempisactive = false;
+	}
+
+	// https://stackoverflow.com/a/19968992/6683474
+	static void uint64_to_unicode(std::string& dist, uint64_t v) {
+		if (v <= 0x7f) return dist.push_back(static_cast<char>(v));
+		if (v <= 0x7ff) {
+			dist.push_back(static_cast<char>(0xc0 | (v >> 6) & 0x1f));
+			dist.push_back(static_cast<char>(0x80 | (v & 0x3f)));
+			return;
+		}
+		if (v <= 0xffff) {
+			dist.push_back(static_cast<char>(0xe0 | ((v >> 12) & 0x0f)));
+			dist.push_back(static_cast<char>(0x80 | ((v >> 6) & 0x3f)));
+			dist.push_back(static_cast<char>(0x80 | (v & 0x3f)));
+			return;
+		}
+		dist.push_back(static_cast<char>(0xf0 | ((v >> 18) & 0x07)));
+		dist.push_back(static_cast<char>(0x80 | ((v >> 12) & 0x3f)));
+		dist.push_back(static_cast<char>(0x80 | ((v >> 6) & 0x3f)));
+		dist.push_back(static_cast<char>(0x80 | (v & 0x3f)));
 	}
 
    public:
@@ -68,9 +89,21 @@ class Decoder {
 		}
 
 		if (escaped) {
-			temp.push_back(c);
 			escaped = false;
-			return true;
+			switch (c) {
+				case 'u': {
+					unicodestatus++;
+					return true;
+				}
+				case '"':
+				case '\\': {
+					temp.push_back(c);
+					return true;
+				}
+				default: {
+					return false;
+				}
+			}
 		}
 
 		if (c == '\\') {
@@ -89,6 +122,7 @@ class Decoder {
 				if (tempisactive) return false;
 				instring = true;
 				skipws = false;
+				tempisactive = true;
 				return true;
 			}
 			case '{': {
@@ -111,6 +145,17 @@ class Decoder {
 			}
 			default: {
 				temp.push_back(c);
+				if (unicodestatus > 0) unicodestatus++;
+				if (unicodestatus == 5) {
+					unicodestatus = 0;
+					const std::string& val = temp.substr(temp.size() - 4);
+
+					char* endPtr = nullptr;
+					uint64_t v = std::strtoull(val.data(), &endPtr, 16);
+					if (errno != 0 || endPtr != val.data() + 4) return false;
+					temp.erase(temp.size() - 4, 4);
+					Decoder::uint64_to_unicode(temp, v);
+				}
 				return true;
 			}
 		}

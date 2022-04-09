@@ -3,6 +3,5 @@
 /.vscode
 /target
 /build
-/cmake-build-debug
-/cmake-build-linux-debug
+/cmake-build-*
 /out
