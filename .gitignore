@@ -4,7 +4,5 @@
 /target
 /build
 /cmake-build-debug
-/cmake-build-release
-/cmake-build-debug-linux
-/cmake-build-release-linux
+/cmake-build-linux-debug
 /out
