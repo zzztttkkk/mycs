@@ -22,7 +22,7 @@ bool Decoder::on_map_end() {
 	if (ele->type() != Type::Map) return false;
 	if (!on_value_sep(false)) return false;
 	stack.pop();
-	lastpopedisacontainer = ele;
+	lastpopedisacontainer = true;
 	return on_value_done(ele);
 }
 
@@ -40,7 +40,7 @@ bool Decoder::on_array_end() {
 	if (ele->type() != Type::Array) return false;
 	if (!on_value_sep(false)) return false;
 	stack.pop();
-	lastpopedisacontainer = ele;
+	lastpopedisacontainer = true;
 	return on_value_done(ele);
 }
 
