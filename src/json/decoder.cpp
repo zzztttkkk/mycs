@@ -4,9 +4,26 @@
 
 #include <mycs/json/decoder.h>
 
-#include <cerrno>
-
 namespace mycs::json {
+
+// ] } ,
+bool Decoder::AfterContainerChars[255] = {
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, true,  false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, true,  false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, true,  false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
 
 bool Decoder::on_map_begin() {
 	auto mv = new MapValue();

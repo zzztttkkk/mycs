@@ -4,4 +4,6 @@ UseTab: Always
 IndentWidth: 4
 ColumnLimit: 120
 AlignAfterOpenBracket: AlwaysBreak
+#todo
+#AlignAfterOpenBracket: BlockIndent
 AlignArrayOfStructures: Left

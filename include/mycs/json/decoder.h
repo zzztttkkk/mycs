@@ -32,6 +32,7 @@ class Decoder {
 
 	std::string temp;
 	bool tempisactive = false;	// a flag for empty string value
+	bool tempislocked = false;
 
 	Value* _result = nullptr;
 	bool instring = false;
@@ -42,6 +43,8 @@ class Decoder {
 	bool lastpopedisacontainer = false;
 	int row = 0;
 	int col = 0;
+
+	static bool AfterContainerChars[255];
 
 	bool on_map_begin();
 
@@ -58,8 +61,9 @@ class Decoder {
 	bool on_value_done(Value* val);
 
 	inline void clear_temp() {
-		this->temp.clear();
-		this->tempisactive = false;
+		temp.clear();
+		tempisactive = false;
+		tempislocked = false;
 	}
 
 	// https://stackoverflow.com/a/19968992/6683474
@@ -118,10 +122,13 @@ class Decoder {
 			if (c == '"') {
 				instring = false;
 				isstring = true;
+				tempislocked = true;
 				return true;
 			}
 			goto totemp;
 		}
+
+		if (lastpopedisacontainer && !Decoder::AfterContainerChars[c]) return false;
 
 		switch (c) {
 			case '"': {
@@ -157,6 +164,8 @@ class Decoder {
 		}
 
 	totemp:
+		if (tempislocked) return false;
+
 		tempisactive = true;
 		temp.push_back(c);
 		if (unicodestatus > 0) {
