@@ -43,14 +43,10 @@ bool Decoder::on_array_end() {
 }
 
 bool Decoder::on_value_sep(bool by_sep) {
-	if (by_sep) {
-		requirenext = true;
-		if (!tempisactive) return false;
-	} else {
-		if (!tempisactive) return !requirenext;
-	}
+	if (by_sep && !tempisactive) return false;
+	if (!by_sep && !tempisactive) return !requirenext;
 
-	auto _ = DecodeHelper(this, by_sep);
+	auto _ = DecodeHelper(this, by_sep);  // set `requirenext` after `on_value_end`
 
 	skipws = true;
 	if (isstring) {
