@@ -1,5 +1,7 @@
 #include <mycs/json/encoder.h>
 
+#include <algorithm>
+
 namespace mycs::json {
 
 void write_string(std::ostream& o, const char* p, size_t s) {
@@ -71,6 +73,13 @@ bool Encoder::encode_array(const ArrayValue& av) {
 	return ostream->exceptions() == 0;
 }
 
+class PairSortObj {
+   public:
+	inline bool operator()(const typename Encoder::SortPairT& a, const typename Encoder::SortPairT& b) {
+		return a.first->compare(*b.first) < 0;
+	}
+};
+
 bool Encoder::encode_map(const MapValue& mv) {
 	const static char* begin = "{";
 	const static char* end = "}";
@@ -79,13 +88,27 @@ bool Encoder::encode_map(const MapValue& mv) {
 	ostream->write(begin, 1);
 	int idx = 0;
 	int lastIdx = static_cast<int>(mv.size()) - 1;
-	for (const auto& pair : mv._data) {
-		write_string(*ostream, pair.first.c_str(), pair.first.size());
-		ostream->write(kvsep, 1);
-		encode(*pair.second);
+	if (sortkey) {
+		auto sorttemp = std::vector<typename Encoder::SortPairT>();
+		for (const auto& pair : mv._data) sorttemp.emplace_back(&(pair.first), pair.second);
+		std::sort(sorttemp.begin(), sorttemp.end(), PairSortObj{});
+		for (const auto& pair : sorttemp) {
+			write_string(*ostream, pair.first->c_str(), pair.first->size());
+			ostream->write(kvsep, 1);
+			encode(*pair.second);
 
-		if (idx < lastIdx) ostream->write(sep, 1);
-		idx++;
+			if (idx < lastIdx) ostream->write(sep, 1);
+			idx++;
+		}
+	} else {
+		for (const auto& pair : mv._data) {
+			write_string(*ostream, pair.first.c_str(), pair.first.size());
+			ostream->write(kvsep, 1);
+			encode(*pair.second);
+
+			if (idx < lastIdx) ostream->write(sep, 1);
+			idx++;
+		}
 	}
 	ostream->write(end, 1);
 	return ostream->exceptions() == 0;

@@ -9,7 +9,6 @@
 namespace mycs::json {
 
 bool Decoder::on_map_begin() {
-	skipws = true;
 	auto mv = new MapValue();
 	stack.push(mv);
 	return true;
@@ -17,7 +16,6 @@ bool Decoder::on_map_begin() {
 
 bool Decoder::on_map_end() {
 	if (stack.empty()) return false;
-	skipws = true;
 	Value* ele = stack.top();
 	if (ele->type() != Type::Map) return false;
 	if (!on_value_sep(false)) return false;
@@ -27,7 +25,6 @@ bool Decoder::on_map_end() {
 }
 
 bool Decoder::on_array_begin() {
-	skipws = true;
 	auto av = new ArrayValue();
 	stack.push(av);
 	return true;
@@ -35,7 +32,6 @@ bool Decoder::on_array_begin() {
 
 bool Decoder::on_array_end() {
 	if (stack.empty()) return false;
-	skipws = true;
 	auto ele = stack.top();
 	if (ele->type() != Type::Array) return false;
 	if (!on_value_sep(false)) return false;
@@ -48,7 +44,6 @@ bool Decoder::on_value_sep(bool by_sep) {
 	if (by_sep && !tempisactive) return lastpopedisacontainer;
 	if (!by_sep && !tempisactive) return !requirenext;
 
-	skipws = true;
 	if (isstring) {
 		if (unicodestatus != 0) return false;
 		isstring = false;
@@ -91,7 +86,6 @@ bool Decoder::on_kv_sep() {
 	mv.keytemp = temp;
 	mv.keytempisactive = true;
 	isstring = false;
-	skipws = true;
 	clear_temp();
 	return true;
 }
@@ -101,7 +95,6 @@ bool Decoder::on_value_done(Value* val) {
 	if (requirenext) requirenext = false;
 
 	if (stack.empty()) {
-		_done = true;
 		_result = val;
 		return true;
 	}

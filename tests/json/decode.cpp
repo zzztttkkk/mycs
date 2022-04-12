@@ -8,12 +8,16 @@ int main() {
 	InitConsole();
 
 	mycs::json::Decoder decoder;
-	auto result = decoder.decode(
-		R"({"a": {"b": "c","d": {"e": "f","g": {"h": {"i": "j","k": "l","m": "n","o": "p","q": "r","s": {"t": "u","v": ["w", "x"]},"y": "z"}}}}})");
+	auto result = decoder.decode(R"([[[{}]]])");
 	if (result) {
 		mycs::json::Encoder encoder(std::cout);
 		encoder.encode(result);
 		std::cout << std::endl;
+	} else {
+		auto err = decoder.error();
+		if (err.has_value()) {
+			std::cout << err->what() << std::endl;
+		}
 	}
 	return 0;
 }

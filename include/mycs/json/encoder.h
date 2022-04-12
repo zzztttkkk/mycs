@@ -11,9 +11,13 @@
 namespace mycs::json {
 
 class Encoder {
+   public:
+	typedef std::pair<const std::string*, const Value*> SortPairT;
+
    private:
 	std::ostream* ostream = nullptr;
 	std::string buf;
+	bool sortkey = false;
 
 	void encode_string(const StringValue& sv);
 
@@ -28,7 +32,10 @@ class Encoder {
 	bool encode_map(const MapValue& mv);
 
    public:
-	explicit Encoder(std::ostream& s) { ostream = &s; }
+	explicit Encoder(std::ostream& s, bool sortkey = false) {
+		ostream = &s;
+		this->sortkey = sortkey;
+	}
 
 	bool encode(const Value& val) {
 		buf.clear();

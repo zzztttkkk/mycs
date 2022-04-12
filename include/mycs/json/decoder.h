@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <fmt/core.h>
+
 #include <iostream>
 #include <stack>
 
@@ -12,6 +14,18 @@
 
 namespace mycs::json {
 
+class DecodeError : public std::exception {
+   private:
+	friend class Decoder;
+
+	std::string msg;
+
+	DecodeError(int r, int c) : std::exception() { msg = fmt::format("DecodeError: @ {}:{}", r + 1, c); }
+
+   public:
+	const char* what() { return msg.c_str(); }
+};
+
 class Decoder {
    private:
 	std::stack<Value*> stack;
@@ -19,15 +33,15 @@ class Decoder {
 	std::string temp;
 	bool tempisactive = false;	// a flag for empty string value
 
-	bool _done = false;
 	Value* _result = nullptr;
-	bool skipws = true;	 // skip white space
 	bool instring = false;
 	bool escaped = false;
 	bool isstring = false;
 	char unicodestatus = 0;
 	bool requirenext = false;
 	bool lastpopedisacontainer = false;
+	int row = 0;
+	int col = 0;
 
 	bool on_map_begin();
 
@@ -69,13 +83,13 @@ class Decoder {
 	}
 
 	bool feed(char c) {
-		//		Fmtp("C {}\r\n", c);
-		if (_done) return false;
-
-		if (skipws) {
-			if (std::isspace(c)) return true;
-			skipws = false;
+		if (c == '\n') {
+			this->row++;
+			this->col = 0;
+		} else {
+			this->col++;
 		}
+		if (!instring && std::isspace(c)) return true;
 
 		if (escaped) {
 			escaped = false;
@@ -100,17 +114,19 @@ class Decoder {
 			return true;
 		}
 
+		if (instring) {
+			if (c == '"') {
+				instring = false;
+				isstring = true;
+				return true;
+			}
+			goto totemp;
+		}
+
 		switch (c) {
 			case '"': {
-				if (instring) {
-					instring = false;
-					skipws = true;
-					isstring = true;
-					return true;
-				}
 				if (tempisactive) return false;
 				instring = true;
-				skipws = false;
 				tempisactive = true;
 				return true;
 			}
@@ -136,24 +152,27 @@ class Decoder {
 				return on_kv_sep();
 			}
 			default: {
-				tempisactive = true;
-				temp.push_back(c);
-				if (unicodestatus > 0) {
-					unicodestatus++;
-					if (unicodestatus == 5) {
-						unicodestatus = 0;
-						const std::string& val = temp.substr(temp.size() - 4);
-
-						char* endPtr = nullptr;
-						uint64_t v = std::strtoull(val.data(), &endPtr, 16);
-						if (errno != 0 || endPtr != val.data() + 4) return false;
-						temp.erase(temp.size() - 4, 4);
-						Decoder::uint64_to_unicode(temp, v);
-					}
-				}
-				return true;
+				goto totemp;
 			}
 		}
+
+	totemp:
+		tempisactive = true;
+		temp.push_back(c);
+		if (unicodestatus > 0) {
+			unicodestatus++;
+			if (unicodestatus == 5) {
+				unicodestatus = 0;
+				const std::string& val = temp.substr(temp.size() - 4);
+
+				char* endPtr = nullptr;
+				uint64_t v = std::strtoull(val.data(), &endPtr, 16);
+				if (errno != 0 || endPtr != val.data() + 4) return false;
+				temp.erase(temp.size() - 4, 4);
+				Decoder::uint64_to_unicode(temp, v);
+			}
+		}
+		return true;
 	}
 
 	bool feed(const char* p, size_t s) {
@@ -182,13 +201,13 @@ class Decoder {
 		free_stack();
 		temp.clear();
 		tempisactive = false;
-		_done = false;
 		_result = nullptr;
-		skipws = false;
 		instring = false;
 		unicodestatus = 0;
 		requirenext = false;
 		lastpopedisacontainer = false;
+		row = 0;
+		col = 0;
 	}
 
 	[[nodiscard]] Value* decode(const std::string& txt) {
@@ -216,6 +235,11 @@ class Decoder {
 	[[nodiscard]] Value* decode(std::istream& input) {
 		char buf[512];
 		return decode(input, buf, 512);
+	}
+
+	std::optional<DecodeError> error() {
+		if (_result != nullptr) return std::nullopt;
+		return std::move(DecodeError(this->row, this->col));
 	}
 };
 
