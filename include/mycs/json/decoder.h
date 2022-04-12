@@ -19,9 +19,6 @@ class Decoder {
 	std::string temp;
 	bool tempisactive = false;	// a flag for empty string value
 
-	std::string keytemp;
-	bool keytempisactive = false;
-
 	bool _done = false;
 	Value* _result = nullptr;
 	bool skipws = true;	 // skip white space
@@ -38,7 +35,7 @@ class Decoder {
 
 	bool on_array_end();
 
-	bool on_value_sep();
+	bool on_value_sep(bool by_sep = true);
 
 	bool on_kv_sep();
 
@@ -70,6 +67,7 @@ class Decoder {
 	}
 
 	bool feed(char c) {
+		//		Fmtp("C {}\r\n", c);
 		if (_done) return false;
 
 		if (skipws) {

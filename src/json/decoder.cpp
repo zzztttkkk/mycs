@@ -20,7 +20,7 @@ bool Decoder::on_map_end() {
 	skipws = true;
 	Value* ele = stack.top();
 	if (ele->type() != Type::Map) return false;
-	if (!on_value_sep()) return false;
+	if (!on_value_sep(false)) return false;
 	stack.pop();
 	return on_value_done(ele);
 }
@@ -37,13 +37,14 @@ bool Decoder::on_array_end() {
 	skipws = true;
 	auto ele = stack.top();
 	if (ele->type() != Type::Array) return false;
-	if (!on_value_sep()) return false;
+	if (!on_value_sep(false)) return false;
 	stack.pop();
 	return on_value_done(ele);
 }
 
-bool Decoder::on_value_sep() {
-	if (!tempisactive) return false;
+bool Decoder::on_value_sep(bool by_sep) {
+	if (by_sep && !tempisactive) return false;
+	if (!by_sep && !tempisactive) return true;
 
 	skipws = true;
 	if (isstring) {
@@ -57,8 +58,9 @@ bool Decoder::on_value_sep() {
 	const static std::string f = "false";
 
 	switch (temp.length()) {
-		case 0:
-			return !keytempisactive;
+		case 0: {
+			return false;
+		}
 		case 4: {
 			if (temp == null) return on_value_done(Null);
 			if (temp == t) return on_value_done(True);
@@ -79,10 +81,13 @@ bool Decoder::on_value_sep() {
 
 bool Decoder::on_kv_sep() {
 	if (!isstring) return false;
-	if (stack.empty() || stack.top()->type() != Type::Map) return false;
+	if (stack.empty()) return false;
+	auto ele = stack.top();
+	if (ele->type() != Type::Map) return false;
 
-	keytemp = temp;
-	keytempisactive = true;
+	auto& mv = ele->map();
+	mv.keytemp = temp;
+	mv.keytempisactive = true;
 	isstring = false;
 	skipws = true;
 	clear_temp();
@@ -101,15 +106,14 @@ bool Decoder::on_value_done(Value* val) {
 	Value* ele = stack.top();
 	switch (ele->type()) {
 		case Type::Map: {
-			if (!keytempisactive) return false;
 			auto& mv = ele->map();
-			mv.insert(keytemp, val);
-			keytempisactive = false;
-			keytemp.clear();
+			if (!mv.keytempisactive) return false;
+			mv.insert(mv.keytemp, val);
+			mv.keytempisactive = false;
+			mv.keytemp.clear();
 			return true;
 		}
 		case Type::Array: {
-			if (keytempisactive) return false;
 			auto& av = ele->array();
 			av.push(val);
 			return true;

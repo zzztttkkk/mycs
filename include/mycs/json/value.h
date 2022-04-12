@@ -205,6 +205,8 @@ class MapValue : public Value {
 	typedef std::unordered_map<std::string, Value*> Map;
 
 	Map _data;
+	std::string keytemp;
+	bool keytempisactive = false;
 
 	template <class MapIter, bool IsConst>
 	class IterBase {
