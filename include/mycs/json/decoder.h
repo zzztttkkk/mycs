@@ -12,8 +12,14 @@
 
 namespace mycs::json {
 
+namespace {
+class DecodeHelper;
+}
+
 class Decoder {
    private:
+	friend class DecodeHelper;
+
 	std::stack<Value*> stack;
 
 	std::string temp;
@@ -26,6 +32,7 @@ class Decoder {
 	bool escaped = false;
 	bool isstring = false;
 	char unicodestatus = 0;
+	bool requirenext = false;
 
 	bool on_map_begin();
 
@@ -198,5 +205,22 @@ class Decoder {
 		return decode(input, buf, 512);
 	}
 };
+
+namespace {
+class DecodeHelper {
+   private:
+	Decoder* decoder;
+	bool by_sep;
+
+   public:
+	DecodeHelper(Decoder* d, bool b) : decoder(d), by_sep(b) {}
+
+	~DecodeHelper() {
+		if (by_sep) {
+			decoder->requirenext = true;
+		}
+	}
+};
+}  // namespace
 
 }  // namespace mycs::json

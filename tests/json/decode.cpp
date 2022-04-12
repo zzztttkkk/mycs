@@ -8,7 +8,7 @@ int main() {
 	InitConsole();
 
 	mycs::json::Decoder decoder;
-	auto result = decoder.decode(R"({"": ""})");
+	auto result = decoder.decode(R"([""])");
 	if (result) {
 		mycs::json::Encoder encoder(std::cout);
 		encoder.encode(result);

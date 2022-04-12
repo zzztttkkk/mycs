@@ -43,8 +43,14 @@ bool Decoder::on_array_end() {
 }
 
 bool Decoder::on_value_sep(bool by_sep) {
-	if (by_sep && !tempisactive) return false;
-	if (!by_sep && !tempisactive) return true;
+	if (by_sep) {
+		requirenext = true;
+		if (!tempisactive) return false;
+	} else {
+		if (!tempisactive) return !requirenext;
+	}
+
+	auto _ = DecodeHelper(this, by_sep);
 
 	skipws = true;
 	if (isstring) {
@@ -96,6 +102,7 @@ bool Decoder::on_kv_sep() {
 
 bool Decoder::on_value_done(Value* val) {
 	clear_temp();
+	if (requirenext) requirenext = false;
 
 	if (stack.empty()) {
 		_done = true;
