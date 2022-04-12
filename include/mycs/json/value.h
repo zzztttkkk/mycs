@@ -56,6 +56,8 @@ class Value {
 	static void free_value(Value*);
 
    public:
+	virtual ~Value() = default;
+
 	[[nodiscard]] inline Type type() const { return t; }
 
 	[[nodiscard]] inline bool is_null() const { return t == Type::Null; }
@@ -162,7 +164,7 @@ class ArrayValue : public Value {
 
    public:
 	ArrayValue() : Value(Type::Array) {}
-	virtual ~ArrayValue() {
+	~ArrayValue() override {
 		for (auto item : _data) Value::free_value(item);
 	}
 
@@ -251,7 +253,7 @@ class MapValue : public Value {
 
    public:
 	MapValue() : Value(Type::Map) {}
-	virtual ~MapValue() {
+	~MapValue() override {
 		for (const auto& pair : _data) Value::free_value(pair.second);
 	}
 

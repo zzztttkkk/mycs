@@ -22,6 +22,7 @@ bool Decoder::on_map_end() {
 	if (ele->type() != Type::Map) return false;
 	if (!on_value_sep(false)) return false;
 	stack.pop();
+	lastpopedisacontainer = ele;
 	return on_value_done(ele);
 }
 
@@ -39,14 +40,13 @@ bool Decoder::on_array_end() {
 	if (ele->type() != Type::Array) return false;
 	if (!on_value_sep(false)) return false;
 	stack.pop();
+	lastpopedisacontainer = ele;
 	return on_value_done(ele);
 }
 
 bool Decoder::on_value_sep(bool by_sep) {
-	if (by_sep && !tempisactive) return false;
+	if (by_sep && !tempisactive) return lastpopedisacontainer;
 	if (!by_sep && !tempisactive) return !requirenext;
-
-	auto _ = DecodeHelper(this, by_sep);  // set `requirenext` after `on_value_end`
 
 	skipws = true;
 	if (isstring) {

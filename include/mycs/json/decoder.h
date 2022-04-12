@@ -12,14 +12,8 @@
 
 namespace mycs::json {
 
-namespace {
-class DecodeHelper;
-}
-
 class Decoder {
    private:
-	friend class DecodeHelper;
-
 	std::stack<Value*> stack;
 
 	std::string temp;
@@ -33,6 +27,7 @@ class Decoder {
 	bool isstring = false;
 	char unicodestatus = 0;
 	bool requirenext = false;
+	bool lastpopedisacontainer = false;
 
 	bool on_map_begin();
 
@@ -132,7 +127,10 @@ class Decoder {
 				return on_array_end();
 			}
 			case ',': {
-				return on_value_sep();
+				auto v = on_value_sep();
+				if (lastpopedisacontainer) lastpopedisacontainer = false;
+				requirenext = true;
+				return v;
 			}
 			case ':': {
 				return on_kv_sep();
@@ -167,10 +165,7 @@ class Decoder {
 
 	bool feed(const std::string& s) { return feed(s.c_str(), s.size()); }
 
-   public:
-	Decoder() = default;
-
-	virtual ~Decoder() {
+	void free_stack() {
 		while (!stack.empty()) {
 			auto ele = stack.top();
 			Value::free_value(ele);
@@ -178,14 +173,32 @@ class Decoder {
 		}
 	}
 
-	Value* decode(const std::string& txt) {
+   public:
+	Decoder() = default;
+
+	virtual ~Decoder() { free_stack(); }
+
+	void clear() {
+		free_stack();
+		temp.clear();
+		tempisactive = false;
+		_done = false;
+		_result = nullptr;
+		skipws = false;
+		instring = false;
+		unicodestatus = 0;
+		requirenext = false;
+		lastpopedisacontainer = false;
+	}
+
+	[[nodiscard]] Value* decode(const std::string& txt) {
 		if (!feed(txt)) return nullptr;
 		if (_result) return _result;
 		if (!on_value_sep()) return nullptr;
 		return _result;
 	}
 
-	Value* decode(std::istream& input, char* buf, std::streamsize bufsize) {
+	[[nodiscard]] Value* decode(std::istream& input, char* buf, std::streamsize bufsize) {
 		while (true) {
 			if (!input.read(buf, bufsize)) {
 				if (input.eof()) break;
@@ -200,27 +213,10 @@ class Decoder {
 		return _result;
 	}
 
-	Value* decode(std::istream& input) {
+	[[nodiscard]] Value* decode(std::istream& input) {
 		char buf[512];
 		return decode(input, buf, 512);
 	}
 };
-
-namespace {
-class DecodeHelper {
-   private:
-	Decoder* decoder;
-	bool by_sep;
-
-   public:
-	DecodeHelper(Decoder* d, bool b) : decoder(d), by_sep(b) {}
-
-	~DecodeHelper() {
-		if (by_sep) {
-			decoder->requirenext = true;
-		}
-	}
-};
-}  // namespace
 
 }  // namespace mycs::json
