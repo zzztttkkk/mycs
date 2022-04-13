@@ -45,8 +45,6 @@ class Decoder {
 	int row = 0;
 	int col = 0;
 
-	static bool AfterContainerChars[255];
-
 	bool on_map_begin();
 
 	bool on_map_end();
@@ -138,8 +136,6 @@ class Decoder {
 			}
 			goto totemp;
 		}
-
-		if (lastpopedisacontainer && !Decoder::AfterContainerChars[c]) return false;
 
 		switch (c) {
 			case '"': {
