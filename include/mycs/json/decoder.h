@@ -168,12 +168,12 @@ class Decoder {
 				switch (ele->type()) {
 					case Type::Map: {
 						auto& mv = ele->map();
-						if (!mv._data.empty() && !mv.requirenext) return false;
+						if (mv._data.empty()) return false;
 						break;
 					}
 					case Type::Array: {
 						auto& av = ele->array();
-						if (!av._data.empty() && !av.requirenext) return false;
+						if (av._data.empty()) return false;
 						break;
 					}
 					default: {
@@ -267,12 +267,16 @@ class Decoder {
 
 	[[nodiscard]] Value* decode(std::istream& input, char* buf, std::streamsize bufsize) {
 		while (true) {
-			if (!input.read(buf, bufsize)) {
-				if (input.eof()) break;
-				return nullptr;
-			}
+			input.read(buf, bufsize);
 			auto size = input.gcount();
-			if (size < 1) continue;
+			if (size < 1) {
+				if (input.eof()) break;
+				if (input.exceptions() != 0) {
+					on_error();
+					return nullptr;
+				}
+				continue;
+			}
 			if (!feed(buf, size)) {
 				on_error();
 				return nullptr;
