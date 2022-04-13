@@ -35,7 +35,11 @@ bool Decoder::on_map_end() {
 	if (stack.empty()) return false;
 	Value* ele = stack.top();
 	if (ele->type() != Type::Map) return false;
-	if (!on_value_sep(ValueSepCase::BeforeContainerEnd)) return false;
+	auto& mv = ele->map();
+	if (tempisactive) {
+		if (!on_value_sep(ValueSepCase::BeforeContainerEnd)) return false;
+	}
+	if (mv.requirenext) return false;
 	stack.pop();
 	lastpopedisacontainer = true;
 	return on_value_done(ele);
@@ -51,7 +55,11 @@ bool Decoder::on_array_end() {
 	if (stack.empty()) return false;
 	auto ele = stack.top();
 	if (ele->type() != Type::Array) return false;
-	if (!on_value_sep(ValueSepCase::BeforeContainerEnd)) return false;
+	auto& av = ele->array();
+	if (tempisactive) {
+		if (!on_value_sep(ValueSepCase::BeforeContainerEnd)) return false;
+	}
+	if (av.requirenext) return false;
 	stack.pop();
 	lastpopedisacontainer = true;
 	return on_value_done(ele);
@@ -64,43 +72,10 @@ bool Decoder::on_value_sep(ValueSepCase vsc) {
 				return false;
 			}
 			case ValueSepCase::ByComma: {
-				if (stack.empty()) return false;
-				auto ele = stack.top();
-				switch (ele->type()) {
-					case Type::Map: {
-						auto& mv = ele->map();
-						if (mv.requirenext) return false;
-						mv.requirenext = true;
-						break;
-					}
-					case Type::Array: {
-						auto& av = ele->array();
-						if (av.requirenext) return false;
-						av.requirenext = true;
-						break;
-					}
-					default: {
-						return false;
-					}
-				}
 				return lastpopedisacontainer;
 			}
-			case ValueSepCase::BeforeContainerEnd: {
-				if (stack.empty()) return false;
-				auto ele = stack.top();
-				switch (ele->type()) {
-					case Type::Map: {
-						auto& mv = ele->map();
-						return !mv.requirenext;
-					}
-					case Type::Array: {
-						auto& av = ele->array();
-						return !av.requirenext;
-					}
-					default: {
-						return false;
-					}
-				}
+			default: {
+				return false;  // this should not happen
 			}
 		}
 	}

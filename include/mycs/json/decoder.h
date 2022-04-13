@@ -163,9 +163,33 @@ class Decoder {
 				return on_array_end();
 			}
 			case ',': {
-				auto v = on_value_sep(ValueSepCase::ByComma);
+				if (stack.empty()) return false;
+				auto ele = stack.top();
+				switch (ele->type()) {
+					case Type::Map: {
+						auto& mv = ele->map();
+						if (mv.requirenext) return false;
+						break;
+					}
+					case Type::Array: {
+						auto& av = ele->array();
+						if (av.requirenext) return false;
+						break;
+					}
+					default: {
+						return false;
+					}
+				}
+				auto ok = on_value_sep(ValueSepCase::ByComma);
 				if (lastpopedisacontainer) lastpopedisacontainer = false;
-				return v;
+				if (ele->type() == Type::Array) {
+					auto& av = ele->array();
+					av.requirenext = true;
+				} else {
+					auto& mv = ele->map();
+					mv.requirenext = true;
+				}
+				return ok;
 			}
 			case ':': {
 				return on_kv_sep();
