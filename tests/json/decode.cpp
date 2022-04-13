@@ -8,7 +8,8 @@ int main() {
 	InitConsole();
 
 	mycs::json::Decoder decoder;
-	auto result = decoder.decode(R"(true,)");
+	// https://github.com/nst/JSONTestSuite/blob/master/test_parsing/n_array_inner_array_no_comma.json
+	auto result = decoder.decode(R"([3[4]])");
 	if (result) {
 		mycs::json::Encoder encoder(std::cout);
 		encoder.encode(result);

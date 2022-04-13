@@ -35,7 +35,7 @@ bool Decoder::on_map_end() {
 	if (stack.empty()) return false;
 	Value* ele = stack.top();
 	if (ele->type() != Type::Map) return false;
-	if (!on_value_sep(false)) return false;
+	if (!on_value_sep(ValueSepCase::BeforeContainerEnd)) return false;
 	stack.pop();
 	lastpopedisacontainer = true;
 	return on_value_done(ele);
@@ -51,15 +51,34 @@ bool Decoder::on_array_end() {
 	if (stack.empty()) return false;
 	auto ele = stack.top();
 	if (ele->type() != Type::Array) return false;
-	if (!on_value_sep(false)) return false;
+	if (!on_value_sep(ValueSepCase::BeforeContainerEnd)) return false;
 	stack.pop();
 	lastpopedisacontainer = true;
 	return on_value_done(ele);
 }
 
-bool Decoder::on_value_sep(bool by_sep) {
-	if (by_sep && !tempisactive) return lastpopedisacontainer;
-	if (!by_sep && !tempisactive) return !requirenext;
+bool Decoder::on_value_sep(ValueSepCase vsc) {
+	switch (vsc) {
+		case ValueSepCase::DecodeEnd: {
+			if (!tempisactive) return !requirenext;
+			break;
+		}
+		default: {
+			if (stack.empty()) return false;
+			auto ele = stack.top();
+			switch (ele->type()) {
+				case Type::Map:
+				case Type::Array: {
+					break;
+				}
+				default: {
+					return false;
+				}
+			}
+			if (!tempisactive) return lastpopedisacontainer;
+			break;
+		}
+	}
 
 	if (isstring) {
 		if (unicodestatus != 0) return false;

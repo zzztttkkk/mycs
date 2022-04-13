@@ -26,6 +26,8 @@ class DecodeError : public std::exception {
 	const char* what() { return msg.c_str(); }
 };
 
+enum ValueSepCase { ByComma, BeforeContainerEnd, DecodeEnd };
+
 class Decoder {
    private:
 	std::stack<Value*> stack;
@@ -54,7 +56,7 @@ class Decoder {
 
 	bool on_array_end();
 
-	bool on_value_sep(bool by_sep = true);
+	bool on_value_sep(ValueSepCase vsc);
 
 	bool on_kv_sep();
 
@@ -64,6 +66,14 @@ class Decoder {
 		temp.clear();
 		tempisactive = false;
 		tempislocked = false;
+	}
+
+	inline void on_error() {
+		if (_result) {
+			delete (_result);
+			_result = nullptr;
+		}
+		free_stack();
 	}
 
 	// https://stackoverflow.com/a/19968992/6683474
@@ -93,6 +103,8 @@ class Decoder {
 		} else {
 			this->col++;
 		}
+
+		if (_result != nullptr) return false;
 		if (!instring && std::isspace(c)) return true;
 
 		if (escaped) {
@@ -150,7 +162,7 @@ class Decoder {
 				return on_array_end();
 			}
 			case ',': {
-				auto v = on_value_sep();
+				auto v = on_value_sep(ValueSepCase::ByComma);
 				if (lastpopedisacontainer) lastpopedisacontainer = false;
 				requirenext = true;
 				return v;
@@ -220,9 +232,12 @@ class Decoder {
 	}
 
 	[[nodiscard]] Value* decode(const std::string& txt) {
-		if (!feed(txt)) return nullptr;
+		if (!feed(txt)) {
+			on_error();
+			return nullptr;
+		}
 		if (_result) return _result;
-		if (!on_value_sep()) return nullptr;
+		if (!on_value_sep(ValueSepCase::DecodeEnd)) return nullptr;
 		return _result;
 	}
 
@@ -234,10 +249,13 @@ class Decoder {
 			}
 			auto size = input.gcount();
 			if (size < 1) continue;
-			if (!feed(buf, size)) return nullptr;
+			if (!feed(buf, size)) {
+				on_error();
+				return nullptr;
+			}
 		}
 		if (_result) return _result;
-		if (!on_value_sep()) return nullptr;
+		if (!on_value_sep(ValueSepCase::DecodeEnd)) return nullptr;
 		return _result;
 	}
 
