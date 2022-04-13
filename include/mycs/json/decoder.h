@@ -41,7 +41,6 @@ class Decoder {
 	bool escaped = false;
 	bool isstring = false;
 	char unicodestatus = 0;
-	bool requirenext = false;
 	bool lastpopedisacontainer = false;
 	int row = 0;
 	int col = 0;
@@ -98,10 +97,10 @@ class Decoder {
 
 	bool feed(char c) {
 		if (c == '\n') {
-			this->row++;
-			this->col = 0;
+			row++;
+			col = 0;
 		} else {
-			this->col++;
+			col++;
 		}
 
 		if (_result != nullptr) return false;
@@ -166,7 +165,6 @@ class Decoder {
 			case ',': {
 				auto v = on_value_sep(ValueSepCase::ByComma);
 				if (lastpopedisacontainer) lastpopedisacontainer = false;
-				requirenext = true;
 				return v;
 			}
 			case ':': {
@@ -227,7 +225,6 @@ class Decoder {
 		_result = nullptr;
 		instring = false;
 		unicodestatus = 0;
-		requirenext = false;
 		lastpopedisacontainer = false;
 		row = 0;
 		col = 0;

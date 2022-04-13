@@ -121,6 +121,8 @@ class ArrayValue : public Value {
 
 	Vec _data;
 
+	bool requirenext = false;
+
 	template <class VecIter, bool IsConst>
 	class IterBase {
 	   private:
@@ -207,8 +209,10 @@ class MapValue : public Value {
 	typedef std::unordered_map<std::string, Value*> Map;
 
 	Map _data;
+
 	std::string keytemp;
 	bool keytempisactive = false;
+	bool requirenext = false;
 
 	template <class MapIter, bool IsConst>
 	class IterBase {

@@ -58,40 +58,50 @@ bool Decoder::on_array_end() {
 }
 
 bool Decoder::on_value_sep(ValueSepCase vsc) {
-	switch (vsc) {
-		case ValueSepCase::DecodeEnd: {
-			if (!tempisactive) return !requirenext;
-			break;
-		}
-		case ValueSepCase::ByComma: {
-			if (stack.empty()) return false;
-			auto ele = stack.top();
-			switch (ele->type()) {
-				case Type::Map:
-				case Type::Array: {
-					break;
+	if (!tempisactive) {
+		switch (vsc) {
+			case ValueSepCase::DecodeEnd: {
+				return false;
+			}
+			case ValueSepCase::ByComma: {
+				if (stack.empty()) return false;
+				auto ele = stack.top();
+				switch (ele->type()) {
+					case Type::Map: {
+						auto& mv = ele->map();
+						if (mv.requirenext) return false;
+						mv.requirenext = true;
+						break;
+					}
+					case Type::Array: {
+						auto& av = ele->array();
+						if (av.requirenext) return false;
+						av.requirenext = true;
+						break;
+					}
+					default: {
+						return false;
+					}
 				}
-				default: {
-					return false;
+				return lastpopedisacontainer;
+			}
+			case ValueSepCase::BeforeContainerEnd: {
+				if (stack.empty()) return false;
+				auto ele = stack.top();
+				switch (ele->type()) {
+					case Type::Map: {
+						auto& mv = ele->map();
+						return !mv.requirenext;
+					}
+					case Type::Array: {
+						auto& av = ele->array();
+						return !av.requirenext;
+					}
+					default: {
+						return false;
+					}
 				}
 			}
-			if (!tempisactive) return false;
-			break;
-		}
-		case ValueSepCase::BeforeContainerEnd: {
-			if (stack.empty()) return false;
-			auto ele = stack.top();
-			switch (ele->type()) {
-				case Type::Map:
-				case Type::Array: {
-					break;
-				}
-				default: {
-					return false;
-				}
-			}
-			if (!tempisactive) return true;
-			break;
 		}
 	}
 
@@ -143,8 +153,6 @@ bool Decoder::on_kv_sep() {
 
 bool Decoder::on_value_done(Value* val) {
 	clear_temp();
-	if (requirenext) requirenext = false;
-
 	if (stack.empty()) {
 		_result = val;
 		return true;
@@ -155,7 +163,16 @@ bool Decoder::on_value_done(Value* val) {
 		case Type::Map: {
 			auto& mv = ele->map();
 			if (!mv.keytempisactive) return false;
+
+			auto iter = mv._data.find(mv.keytemp);
+			if (iter != mv._data.end()) {
+				delete (iter->second);
+				mv._data.erase(iter);
+			}
+
 			mv.insert(mv.keytemp, val);
+
+			mv.requirenext = false;
 			mv.keytempisactive = false;
 			mv.keytemp.clear();
 			return true;
@@ -163,6 +180,8 @@ bool Decoder::on_value_done(Value* val) {
 		case Type::Array: {
 			auto& av = ele->array();
 			av.push(val);
+
+			av.requirenext = false;
 			return true;
 		}
 		default: {
