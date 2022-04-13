@@ -6,7 +6,9 @@
 
 #include <fmt/core.h>
 
+#include <functional>
 #include <iostream>
+#include <utility>
 
 #define Fmtp(...) fmt::print(__VA_ARGS__)
 
@@ -15,3 +17,17 @@
 #else
 #define InitConsole()
 #endif
+
+namespace mycs::_utils {
+
+class Defer {
+   private:
+	std::function<void()> fn;
+
+   public:
+	explicit Defer(std::function<void()> fn) : fn(std::move(fn)) {}
+
+	virtual ~Defer() { fn(); }
+};
+
+}  // namespace mycs::_utils

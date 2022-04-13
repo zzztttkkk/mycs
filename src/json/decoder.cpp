@@ -63,7 +63,7 @@ bool Decoder::on_value_sep(ValueSepCase vsc) {
 			if (!tempisactive) return !requirenext;
 			break;
 		}
-		default: {
+		case ValueSepCase::ByComma: {
 			if (stack.empty()) return false;
 			auto ele = stack.top();
 			switch (ele->type()) {
@@ -75,7 +75,22 @@ bool Decoder::on_value_sep(ValueSepCase vsc) {
 					return false;
 				}
 			}
-			if (!tempisactive) return lastpopedisacontainer;
+			if (!tempisactive) return false;
+			break;
+		}
+		case ValueSepCase::BeforeContainerEnd: {
+			if (stack.empty()) return false;
+			auto ele = stack.top();
+			switch (ele->type()) {
+				case Type::Map:
+				case Type::Array: {
+					break;
+				}
+				default: {
+					return false;
+				}
+			}
+			if (!tempisactive) return true;
 			break;
 		}
 	}

@@ -5,3 +5,7 @@
 #include "./mycs/http/client.h"
 #include "./mycs/json/decoder.h"
 #include "./mycs/json/encoder.h"
+
+namespace mycs {
+typedef _utils::Defer Defer;
+}

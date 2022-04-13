@@ -2,14 +2,19 @@
 // Created by ztk on 2022/4/8.
 //
 
+#include <fstream>
 #include <mycs.hpp>
 
 int main() {
 	InitConsole();
 
 	mycs::json::Decoder decoder;
-	// https://github.com/nst/JSONTestSuite/blob/master/test_parsing/n_array_inner_array_no_comma.json
-	auto result = decoder.decode(R"([3[4]])");
+	std::ifstream f;
+	f.open("../../../JSONTestSuite/test_parsing/y_array_empty.json", std::ios::in);
+	if (!f.is_open()) return 1;
+	mycs::Defer _([&f]() { f.close(); });
+
+	auto result = decoder.decode(R"({"asd":"sdf"})");
 	if (result) {
 		mycs::json::Encoder encoder(std::cout);
 		encoder.encode(result);

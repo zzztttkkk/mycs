@@ -150,12 +150,14 @@ class Decoder {
 				return true;
 			}
 			case '{': {
+				if (tempisactive) return false;
 				return on_map_begin();
 			}
 			case '}': {
 				return on_map_end();
 			}
 			case '[': {
+				if (tempisactive) return false;
 				return on_array_begin();
 			}
 			case ']': {
