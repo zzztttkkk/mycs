@@ -102,7 +102,11 @@ class Decoder {
 		}
 
 		if (_result != nullptr) return false;
-		if (!instring && std::isspace(c)) return true;
+		if (!instring && std::isspace(c)) {
+			if (temp.empty()) return true;
+			temp.push_back(c);
+			return true;
+		}
 
 		if (escaped) {
 			escaped = false;
@@ -164,12 +168,12 @@ class Decoder {
 				switch (ele->type()) {
 					case Type::Map: {
 						auto& mv = ele->map();
-						if (mv.requirenext) return false;
+						if (!mv._data.empty() && !mv.requirenext) return false;
 						break;
 					}
 					case Type::Array: {
 						auto& av = ele->array();
-						if (av.requirenext) return false;
+						if (!av._data.empty() && !av.requirenext) return false;
 						break;
 					}
 					default: {
@@ -200,7 +204,7 @@ class Decoder {
 
 		tempisactive = true;
 		temp.push_back(c);
-		if (unicodestatus > 0) {
+		if (instring && unicodestatus > 0) {
 			unicodestatus++;
 			if (unicodestatus == 5) {
 				unicodestatus = 0;
@@ -242,6 +246,7 @@ class Decoder {
 		free_stack();
 		temp.clear();
 		tempisactive = false;
+		tempislocked = false;
 		_result = nullptr;
 		instring = false;
 		unicodestatus = 0;

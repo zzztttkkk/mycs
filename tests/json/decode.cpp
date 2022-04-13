@@ -14,7 +14,7 @@ int main() {
 	if (!f.is_open()) return 1;
 	mycs::Defer _([&f]() { f.close(); });
 
-	auto result = decoder.decode(R"({"a":[[],[]]})");
+	auto result = decoder.decode(R"([1,  true, false ])");
 	if (result) {
 		mycs::json::Encoder encoder(std::cout);
 		encoder.encode(result);

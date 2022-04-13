@@ -183,6 +183,12 @@ class ArrayValue : public Value {
 
 	[[nodiscard]] bool empty() const { return _data.empty(); }
 
+	void clear() {
+		for (auto item : _data) Value::free_value(item);
+		_data.clear();
+		requirenext = false;
+	}
+
 	typedef IterBase<Vec::iterator, false> Iter;
 	typedef IterBase<Vec::reverse_iterator, false> RIter;
 	typedef IterBase<Vec::const_iterator, true> ConstIter;
@@ -269,6 +275,14 @@ class MapValue : public Value {
 	void erase(const std::string& key) { _data.erase(key); }
 
 	[[nodiscard]] size_t size() const { return _data.size(); }
+
+	void clear() {
+		for (const auto& pair : _data) Value::free_value(pair.second);
+		_data.clear();
+		keytemp.clear();
+		keytempisactive = false;
+		requirenext = false;
+	}
 
 	typedef IterBase<Map::iterator, false> Iter;
 	typedef IterBase<Map::const_iterator, true> ConstIter;

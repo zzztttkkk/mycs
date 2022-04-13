@@ -63,28 +63,46 @@ bool Decoder::on_value_sep(ValueSepCase vsc) {
 		return on_value_done(new StringValue(temp));
 	}
 
-	const static std::string null = "null";
-	const static std::string t = "true";
-	const static std::string f = "false";
+	int left = 0;
+	for (; left < temp.size() - 1; ++left) {
+		if (!std::isspace(temp[left])) break;
+	}
+	int right = static_cast<int>(temp.size()) - 1;
+	for (; right >= left; --right) {
+		if (!std::isspace(temp[right])) break;
+	}
 
-	switch (temp.length()) {
+	const char* begin = temp.data() + left;
+	int length = right - left + 1;
+
+	switch (length) {
 		case 0: {
 			return false;
 		}
 		case 4: {
-			if (temp == null) return on_value_done(Null);
-			if (temp == t) return on_value_done(True);
+			if (*begin == 'n' && *(begin + 1) == 'u' && *(begin + 2) == 'l' && *(begin + 3) == 'l') {
+				return on_value_done(Null);
+			}
+			if (*begin == 't' && *(begin + 1) == 'r' && *(begin + 2) == 'u' && *(begin + 3) == 'e') {
+				return on_value_done(True);
+			}
 			break;
 		}
 		case 5: {
-			if (temp == f) return on_value_done(False);
+			// clang-format off
+			if (*begin == 'f' && *(begin + 1) == 'a' && *(begin + 2) == 'l' && *(begin + 3) == 's' && *(begin + 4) == 'e') {
+				return on_value_done(False);
+			}
+			// clang-format on
 			break;
+		}
+		default: {
 		}
 	}
 
 	char* endPtr = nullptr;
-	double v = std::strtod(temp.data(), &endPtr);
-	if (errno != 0 || endPtr != temp.data() + temp.size()) return false;
+	double v = std::strtod(begin, &endPtr);
+	if (errno != 0 || endPtr != temp.data() + right + 1) return false;
 	bool is_int = temp.find('.') == std::string::npos;
 	return on_value_done(new NumberValue(v, is_int));
 }
