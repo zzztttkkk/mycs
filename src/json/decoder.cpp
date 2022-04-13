@@ -36,9 +36,7 @@ bool Decoder::on_map_end() {
 	Value* ele = stack.top();
 	if (ele->type() != Type::Map) return false;
 	auto& mv = ele->map();
-	if (tempisactive) {
-		if (!on_value_sep(ValueSepCase::BeforeContainerEnd)) return false;
-	}
+	if (!on_value_sep(ValueSepCase::BeforeContainerEnd)) return false;
 	if (mv.requirenext) return false;
 	stack.pop();
 	lastpopedisacontainer = true;
@@ -56,9 +54,7 @@ bool Decoder::on_array_end() {
 	auto ele = stack.top();
 	if (ele->type() != Type::Array) return false;
 	auto& av = ele->array();
-	if (tempisactive) {
-		if (!on_value_sep(ValueSepCase::BeforeContainerEnd)) return false;
-	}
+	if (!on_value_sep(ValueSepCase::BeforeContainerEnd)) return false;
 	if (av.requirenext) return false;
 	stack.pop();
 	lastpopedisacontainer = true;
@@ -75,7 +71,7 @@ bool Decoder::on_value_sep(ValueSepCase vsc) {
 				return lastpopedisacontainer;
 			}
 			default: {
-				return false;  // this should not happen
+				return true;
 			}
 		}
 	}
