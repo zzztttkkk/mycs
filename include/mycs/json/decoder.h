@@ -122,6 +122,8 @@ class Decoder {
 		col = 0;
 	}
 
+	Value* result() { return _result; }	 // peek result when feeding
+
 	bool feed(char c) {
 		if (c == '\n') {
 			row++;
@@ -251,14 +253,22 @@ class Decoder {
 
 	bool feed(const std::string& s) { return feed(s.c_str(), s.size()); }
 
+	// finish the feeding
+	[[nodiscard]] inline Value* finish() {
+		if (_result) return _result;
+		if (!on_value_sep(ValueSepCase::DecodeEnd)) {
+			on_error();
+			return nullptr;
+		}
+		return _result;
+	}
+
 	[[nodiscard]] Value* decode(const std::string& txt) {
 		if (!feed(txt)) {
 			on_error();
 			return nullptr;
 		}
-		if (_result) return _result;
-		if (!on_value_sep(ValueSepCase::DecodeEnd)) return nullptr;
-		return _result;
+		return finish();
 	}
 
 	[[nodiscard]] Value* decode(std::istream& input, char* buf, std::streamsize bufsize) {
@@ -278,9 +288,7 @@ class Decoder {
 				return nullptr;
 			}
 		}
-		if (_result) return _result;
-		if (!on_value_sep(ValueSepCase::DecodeEnd)) return nullptr;
-		return _result;
+		return finish();
 	}
 
 	[[nodiscard]] Value* decode(std::istream& input) {
