@@ -74,6 +74,8 @@ class Value {
 		}
 	}
 
+	[[nodiscard]] virtual Value* copy() const = 0;
+
 #define MakeJsonValueTypeCastMethod(T, n)                                                          \
 	[[nodiscard]] virtual const T& n() const { throw std::runtime_error("bad json value type"); }; \
 	virtual T& n() { throw std::runtime_error("bad json value type"); }
@@ -94,10 +96,12 @@ class StringValue : public Value {
 
    public:
 	StringValue() : Value(Type::String){};
-	explicit StringValue(const std::string& v) : Value(Type::String) { this->_data = v; }
-	StringValue(const char* p, size_t s) : Value(Type::String) { this->_data.assign(p, s); }
+	explicit StringValue(const std::string& v) : Value(Type::String) { _data = v; }
+	StringValue(const char* p, size_t s) : Value(Type::String) { _data.assign(p, s); }
 	[[nodiscard]] const StringValue& string() const override { return *this; }
 	StringValue& string() override { return *this; }
+
+	[[nodiscard]] Value* copy() const override { return new StringValue(_data); }
 };
 
 class NumberValue : public Value {
@@ -123,6 +127,8 @@ class NumberValue : public Value {
 	NumberValue& number() override { return *this; }
 
 	[[nodiscard]] int64_t integer() const { return (int64_t)(std::trunc(_data)); }
+
+	[[nodiscard]] Value* copy() const override { return new NumberValue(_data, is_int); }
 };
 
 class ArrayValue : public Value {
@@ -187,9 +193,16 @@ class ArrayValue : public Value {
 
 	void push(Value* v) { _data.push_back(v); }
 
-	Value* at(size_t idx) { return _data.at(idx); }
-
-	[[nodiscard]] const Value* at(size_t idx) const { return _data.at(idx); }
+#define NOARG
+#define MakeAt(cst)                              \
+	cst Value* at(size_t idx) cst {              \
+		if (idx >= _data.size()) return nullptr; \
+		return _data.at(idx);                    \
+	}
+	MakeAt(NOARG);
+	[[nodiscard]] MakeAt(const);
+#undef MakeAt
+#undef NOARG
 
 	[[nodiscard]] size_t size() const { return _data.size(); }
 
@@ -199,6 +212,13 @@ class ArrayValue : public Value {
 		for (auto item : _data) Value::free_value(item);
 		_data.clear();
 		requirenext = false;
+	}
+
+	[[nodiscard]] Value* copy() const override {
+		auto dist = new ArrayValue();
+		dist->requirenext = requirenext;
+		for (const auto* item : _data) dist->_data.push_back(item->copy());
+		return dist;
 	}
 
 	typedef IterBase<Vec::iterator, false> Iter;
@@ -286,6 +306,18 @@ class MapValue : public Value {
 
 	void erase(const std::string& key) { _data.erase(key); }
 
+#define NOARG
+#define MakeGet(cst)                             \
+	cst Value* get(const std::string& key) cst { \
+		auto iter = _data.find(key);             \
+		if (iter == _data.end()) return nullptr; \
+		return iter->second;                     \
+	}
+	MakeGet(NOARG);
+	[[nodiscard]] MakeGet(const);
+#undef NOARG
+#undef MakeGet
+
 	[[nodiscard]] size_t size() const { return _data.size(); }
 
 	void clear() {
@@ -294,6 +326,15 @@ class MapValue : public Value {
 		keytemp.clear();
 		keytempisactive = false;
 		requirenext = false;
+	}
+
+	[[nodiscard]] Value* copy() const override {
+		auto dist = new MapValue();
+		for (const auto& pair : _data) dist->_data.insert(pair);
+		dist->requirenext = requirenext;
+		dist->keytempisactive = keytempisactive;
+		dist->keytemp = keytemp;
+		return dist;
 	}
 
 	typedef IterBase<Map::iterator, false> Iter;
@@ -322,6 +363,8 @@ class NullValue : public Value {
 	inline void operator delete(void*) {}  // NOLINT
 
 	explicit operator bool() const { return false; }
+
+	[[nodiscard]] Value* copy() const override { return (Value*)(void*)(this); }
 };
 
 class BoolValue : public Value {
@@ -339,6 +382,8 @@ class BoolValue : public Value {
 	inline void operator delete(void*) {}  // NOLINT
 
 	explicit operator bool() const { return _data; }
+
+	[[nodiscard]] Value* copy() const override { return (Value*)(void*)(this); }
 };
 
 class NullBoolNew {
@@ -352,5 +397,38 @@ class NullBoolNew {
 static NullValue* const Null = NullBoolNew::none();			  // NOLINT
 static BoolValue* const True = NullBoolNew::boolean(true);	  // NOLINT
 static BoolValue* const False = NullBoolNew::boolean(false);  // NOLINT
+
+namespace {
+template <typename T>
+class Peeker {
+   public:
+	template <typename = std::enable_if<std::is_integral<T>::value>>
+	inline const Value* peek(const Value* src, T idx) {
+		if (src->type() != Type::Array) return nullptr;
+		auto& av = src->array();
+		return av.at(static_cast<size_t>(idx));
+	}
+
+	inline const Value* peek(const Value* src, const char* key) {
+		if (src->type() != Type::Map) return nullptr;
+		auto& mv = src->map();
+		return mv.get(key);
+	}
+
+	inline const Value* peek(const Value* src, const std::string& key) { return peek(src, key.c_str()); }
+};
+
+template <typename T>
+[[nodiscard]] inline const Value* peek(const Value* src, T key) {
+	return Peeker<T>().peek(src, key);
+}
+}  // namespace
+
+template <typename T, typename... Args>
+[[nodiscard]] const Value* peek(const Value* src, T key, Args... args) {
+	auto ptr = peek(src, key);
+	if (ptr == nullptr) return nullptr;
+	return peek(ptr, args...);
+}
 
 }  // namespace mycs::json

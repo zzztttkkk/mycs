@@ -12,7 +12,7 @@ namespace mycs::json {
 
 class Encoder {
    public:
-	typedef std::pair<const std::string*, const Value*> SortPairT;
+	typedef std::pair<const std::string*, const Value*> SortPair;
 
    private:
 	std::ostream* ostream = nullptr;

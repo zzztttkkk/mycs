@@ -9,7 +9,7 @@ using namespace mycs::json;
 int main() {
 	Encoder encoder(std::cout, true);
 	MapValue mv;
-	mv.insert("a", new NumberValue(12));
+	mv.insert("xa", new NumberValue(12));
 	auto av = new ArrayValue();
 	av->push(new NumberValue(3.8123));
 	av->push(False);
@@ -19,5 +19,8 @@ int main() {
 
 	encoder.encode(mv);
 	std::cout << std::endl;
+
+	auto obj = peek(&mv, "c", 1);
+	Fmtp("{}\r\n", obj == False);
 	return 0;
 }

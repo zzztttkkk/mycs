@@ -75,7 +75,7 @@ bool Encoder::encode_array(const ArrayValue& av) {
 
 class PairSortObj {
    public:
-	inline bool operator()(const typename Encoder::SortPairT& a, const typename Encoder::SortPairT& b) {
+	inline bool operator()(const typename Encoder::SortPair& a, const typename Encoder::SortPair& b) {
 		return a.first->compare(*b.first) < 0;
 	}
 };
@@ -89,7 +89,8 @@ bool Encoder::encode_map(const MapValue& mv) {
 	int idx = 0;
 	int lastIdx = static_cast<int>(mv.size()) - 1;
 	if (sortkey) {
-		auto sorttemp = std::vector<typename Encoder::SortPairT>();
+		std::vector<typename Encoder::SortPair> sorttemp;
+		sorttemp.reserve(mv._data.size());
 		for (const auto& pair : mv._data) sorttemp.emplace_back(&(pair.first), pair.second);
 		std::sort(sorttemp.begin(), sorttemp.end(), PairSortObj{});
 		for (const auto& pair : sorttemp) {

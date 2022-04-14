@@ -135,11 +135,7 @@ class Decoder {
 		if (_result != nullptr) return false;
 
 		if (std::isspace(c)) {
-			if (instring || !temp.empty()) {
-				temp.push_back(c);
-				tempisactive = true;
-				return true;
-			}
+			if (!tempislocked && !temp.empty()) temp.push_back(c);
 			return true;
 		}
 
