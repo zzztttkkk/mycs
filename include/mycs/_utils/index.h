@@ -4,6 +4,13 @@
 
 #pragma once
 
+// https://youtrack.jetbrains.com/issue/CPP-27864
+#ifdef _MSC_VER
+#ifndef __cpp_impl_coroutine
+#define __cpp_impl_coroutine 1
+#endif	// __cpp_impl_coroutine
+#endif	// _MSC_VER
+
 #include <fmt/core.h>
 
 #include <functional>

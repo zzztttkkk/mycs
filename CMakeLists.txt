@@ -6,9 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(Libs "")
 
 if (${MSVC})
-	# https://youtrack.jetbrains.com/issue/CPP-27864
 	add_compile_options(/utf-8 /wd4005)
-	add_definitions(-D_WIN32_WINNT=0x0601 -D__cpp_lib_coroutine)
+	add_definitions(-D_WIN32_WINNT=0x0601)
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 	add_compile_options(-fcoroutines)
 	set(Libs "${Libs};pthread")
