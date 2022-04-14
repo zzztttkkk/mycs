@@ -93,6 +93,32 @@ class Decoder {
 		dist.push_back(static_cast<char>(0x80 | (v & 0x3f)));
 	}
 
+	void free_stack() {
+		while (!stack.empty()) {
+			auto ele = stack.top();
+			Value::free_value(ele);
+			stack.pop();
+		}
+	}
+
+   public:
+	Decoder() = default;
+
+	virtual ~Decoder() { free_stack(); }
+
+	void clear() {
+		free_stack();
+		temp.clear();
+		tempisactive = false;
+		tempislocked = false;
+		_result = nullptr;
+		instring = false;
+		unicodestatus = 0;
+		lastpopedisacontainer = false;
+		row = 0;
+		col = 0;
+	}
+
 	bool feed(char c) {
 		if (c == '\n') {
 			row++;
@@ -228,32 +254,6 @@ class Decoder {
 	}
 
 	bool feed(const std::string& s) { return feed(s.c_str(), s.size()); }
-
-	void free_stack() {
-		while (!stack.empty()) {
-			auto ele = stack.top();
-			Value::free_value(ele);
-			stack.pop();
-		}
-	}
-
-   public:
-	Decoder() = default;
-
-	virtual ~Decoder() { free_stack(); }
-
-	void clear() {
-		free_stack();
-		temp.clear();
-		tempisactive = false;
-		tempislocked = false;
-		_result = nullptr;
-		instring = false;
-		unicodestatus = 0;
-		lastpopedisacontainer = false;
-		row = 0;
-		col = 0;
-	}
 
 	[[nodiscard]] Value* decode(const std::string& txt) {
 		if (!feed(txt)) {
