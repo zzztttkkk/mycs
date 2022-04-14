@@ -62,9 +62,21 @@ class Value {
 
 	[[nodiscard]] inline bool is_null() const { return t == Type::Null; }
 
-#define MakeJsonValueTypeCastMethod(T, n)                                       \
-	[[nodiscard]] virtual const T& n() const { throw std::runtime_error(""); }; \
-	virtual T& n() { throw std::runtime_error(""); }
+	[[nodiscard]] inline bool is_container() const {
+		switch (t) {
+			case Type::Map:
+			case Type::Array: {
+				return true;
+			}
+			default: {
+				return false;
+			}
+		}
+	}
+
+#define MakeJsonValueTypeCastMethod(T, n)                                                          \
+	[[nodiscard]] virtual const T& n() const { throw std::runtime_error("bad json value type"); }; \
+	virtual T& n() { throw std::runtime_error("bad json value type"); }
 	MakeJsonValueTypeCastMethod(StringValue, string);
 	MakeJsonValueTypeCastMethod(NumberValue, number);
 	MakeJsonValueTypeCastMethod(BoolValue, boolean);

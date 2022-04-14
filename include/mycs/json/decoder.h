@@ -32,12 +32,12 @@ class Decoder {
    private:
 	std::stack<Value*> stack;
 
-	std::string temp;
+	std::string temp;			// string value; key; value
 	bool tempisactive = false;	// a flag for empty string value
-	bool tempislocked = false;
+	bool tempislocked = false;	// lock temp when string end
 
 	Value* _result = nullptr;
-	bool instring = false;
+	bool instring = false;	// temp is a string
 	bool escaped = false;
 	bool isstring = false;
 	char unicodestatus = 0;
@@ -128,36 +128,41 @@ class Decoder {
 		}
 
 		if (_result != nullptr) return false;
-		if (!instring && std::isspace(c)) {
-			if (temp.empty()) return true;
-			temp.push_back(c);
-			return true;
-		}
 
-		if (escaped) {
-			escaped = false;
-			switch (c) {
-				case 'u': {
-					unicodestatus++;
-					return true;
-				}
-				case '"':
-				case '\\': {
-					temp.push_back(c);
-					return true;
-				}
-				default: {
-					return false;
-				}
+		if (std::isspace(c)) {
+			if (instring || !temp.empty()) {
+				temp.push_back(c);
+				tempisactive = true;
+				return true;
 			}
-		}
-
-		if (c == '\\') {
-			escaped = true;
 			return true;
 		}
 
 		if (instring) {
+			if (escaped) {
+				escaped = false;
+				switch (c) {
+					case 'u': {
+						unicodestatus++;
+						return true;
+					}
+					case '"':
+					case '\\': {
+						temp.push_back(c);
+						tempisactive = true;
+						return true;
+					}
+					default: {
+						return false;
+					}
+				}
+			}
+
+			if (c == '\\') {
+				escaped = true;
+				return true;
+			}
+
 			if (c == '"') {
 				instring = false;
 				isstring = true;
@@ -191,23 +196,11 @@ class Decoder {
 			case ',': {
 				if (stack.empty()) return false;
 				auto ele = stack.top();
-				switch (ele->type()) {
-					case Type::Map: {
-						auto& mv = ele->map();
-						if (mv._data.empty()) return false;
-						break;
-					}
-					case Type::Array: {
-						auto& av = ele->array();
-						if (av._data.empty()) return false;
-						break;
-					}
-					default: {
-						return false;
-					}
-				}
+				if (!ele->is_container()) return false;
+
 				auto ok = on_value_sep(ValueSepCase::ByComma);
 				if (lastpopedisacontainer) lastpopedisacontainer = false;
+
 				if (ele->type() == Type::Array) {
 					auto& av = ele->array();
 					av.requirenext = true;
