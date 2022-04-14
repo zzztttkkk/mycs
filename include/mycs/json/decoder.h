@@ -36,12 +36,15 @@ class Decoder {
 	bool tempisactive = false;	// a flag for empty string value
 	bool tempislocked = false;	// lock temp when string end
 
+	// if the parsing succeeds, the result is held by the caller.(it will never be deleted by `Decoder`)
 	Value* _result = nullptr;
-	bool instring = false;	// temp is a string
-	bool escaped = false;
-	bool isstring = false;
-	char unicodestatus = 0;
+	bool instring = false;	 // temp is a string, and string is parsing
+	bool escaped = false;	 // prev char is `\`
+	bool isstring = false;	 // temp is a string, and it is finished
+	char unicodestatus = 0;	 // unicode escape char counter
+	// when `,`, if temp is not active, and last poped is a container, it also is valid.
 	bool lastpopedisacontainer = false;
+	// remember error location
 	int row = 0;
 	int col = 0;
 
