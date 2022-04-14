@@ -249,8 +249,10 @@ class Decoder {
 
 	bool feed(const std::string& s) { return feed(s.c_str(), s.size()); }
 
+#define NodiscardMsg "the result will not deleted by `Decode`"
+
 	// finish the feeding
-	[[nodiscard]] inline Value* finish() {
+	[[nodiscard(NodiscardMsg)]] inline Value* finish() {
 		if (_result) return _result;
 		if (!on_value_sep(ValueSepCase::DecodeEnd)) {
 			on_error();
@@ -259,7 +261,7 @@ class Decoder {
 		return _result;
 	}
 
-	[[nodiscard]] Value* decode(const std::string& txt) {
+	[[nodiscard(NodiscardMsg)]] Value* decode(const std::string& txt) {
 		if (!feed(txt)) {
 			on_error();
 			return nullptr;
@@ -267,7 +269,7 @@ class Decoder {
 		return finish();
 	}
 
-	[[nodiscard]] Value* decode(std::istream& input, char* buf, std::streamsize bufsize) {
+	[[nodiscard(NodiscardMsg)]] Value* decode(std::istream& input, char* buf, std::streamsize bufsize) {
 		while (true) {
 			input.read(buf, bufsize);
 			auto size = input.gcount();
@@ -287,10 +289,12 @@ class Decoder {
 		return finish();
 	}
 
-	[[nodiscard]] Value* decode(std::istream& input) {
+	[[nodiscard(NodiscardMsg)]] Value* decode(std::istream& input) {
 		char buf[512];
 		return decode(input, buf, 512);
 	}
+
+#undef NodiscardMsg
 
 	std::optional<DecodeError> error() {
 		if (_result != nullptr) return std::nullopt;
