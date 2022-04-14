@@ -425,10 +425,10 @@ template <typename T>
 }  // namespace
 
 template <typename T, typename... Args>
-[[nodiscard]] const Value* peek(const Value* src, T key, Args... args) {
+[[nodiscard]] const Value* peek(const Value* src, T key, Args&&... args) {
 	auto ptr = peek(src, key);
 	if (ptr == nullptr) return nullptr;
-	return peek(ptr, args...);
+	return peek(ptr, std::forward<Args>(args)...);
 }
 
 }  // namespace mycs::json
