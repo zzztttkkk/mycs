@@ -6,19 +6,6 @@
 
 namespace mycs::json {
 
-void Value::free_value(Value* val) {
-	switch (val->type()) {
-		case Type::Null: {
-		}
-		case Type::Bool: {
-			return;
-		}
-		default: {
-			delete (val);
-		}
-	}
-}
-
 const Value* Value::peek(const std::vector<typename Value::PathItem>& path) const {
 	const Value* cursor = this;
 	for (const auto& v : path) {

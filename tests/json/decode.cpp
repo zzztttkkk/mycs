@@ -2,25 +2,16 @@
 // Created by ztk on 2022/4/8.
 //
 
+#include <filesystem>
 #include <fstream>
 #include <mycs.hpp>
 
-int main() {
-	InitConsole();
+namespace fs = std::filesystem;
 
-	mycs::json::Decoder decoder;
-	std::ifstream f;
-	f.open("../../../JSONTestSuite/test_parsing/y_array_empty.json", std::ios::in);
-	if (!f.is_open()) return 1;
-	mycs::Defer _([&f]() { f.close(); });
+void decode_one(mycs::json::Decoder& decoder, std::ifstream& f) {
+	decoder.clear();
 
-	auto result = decoder.decode(R"({
-"$schema": "https://json-schema.org/draft/2020-12/schema",
-"$id": "https://example.com/product.schema.json",
-"title": "Product",
-"description": "A product in the catalog",
-"type": "object"
-})");
+	auto result = decoder.decode(f);
 	if (result) {
 		mycs::json::Encoder encoder(std::cout);
 		encoder.encode(result);
@@ -30,6 +21,26 @@ int main() {
 		if (err.has_value()) {
 			std::cout << err->what() << std::endl;
 		}
+	}
+	f.close();
+}
+
+int main() {
+	InitConsole();
+
+	mycs::json::Decoder decoder;
+	fs::path path("../../../JSONTestSuite/test_parsing/");
+	fs::directory_iterator end;
+
+	for (auto iter = fs::directory_iterator(path); iter != end; iter++) {
+		if (iter->path().filename().c_str()[0] != 'n') continue;
+		std::wcout << "File:" << iter->path() << std::endl;
+
+		std::ifstream f;
+		f.open(iter->path(), std::ios::in);
+		if (!f.is_open()) continue;
+
+		decode_one(decoder, f);
 	}
 	return 0;
 }

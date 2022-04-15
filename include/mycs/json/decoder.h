@@ -6,6 +6,8 @@
 
 #include <fmt/core.h>
 
+#include <clocale>
+#include <cwctype>
 #include <iostream>
 #include <stack>
 
@@ -132,12 +134,12 @@ class Decoder {
 			col++;
 		}
 
-		if (_result != nullptr) return false;
-
-		if (std::isspace(c)) {
+		if (std::iswspace(c)) {
 			if (!tempislocked && !temp.empty()) temp.push_back(c);
 			return true;
 		}
+
+		if (_result != nullptr) return false;
 
 		if (instring) {
 			if (escaped) {

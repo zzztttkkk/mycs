@@ -65,11 +65,11 @@ bool Decoder::on_value_sep(ValueSepCase vsc) {
 
 	int left = 0;
 	for (; left < temp.size() - 1; ++left) {
-		if (!std::isspace(temp[left])) break;
+		if (!std::iswspace(temp[left])) break;
 	}
 	int right = static_cast<int>(temp.size()) - 1;
 	for (; right >= left; --right) {
-		if (!std::isspace(temp[right])) break;
+		if (!std::iswspace(temp[right])) break;
 	}
 
 	const char* begin = temp.data() + left;

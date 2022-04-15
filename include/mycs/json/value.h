@@ -54,7 +54,18 @@ class Value {
 
 	explicit Value(Type t) : t(t) {}
 
-	static void free_value(Value*);
+	static void free_value(Value* val) {
+		switch (val->type()) {
+			case Type::Null: {
+			}
+			case Type::Bool: {
+				return;
+			}
+			default: {
+				delete (val);
+			}
+		}
+	};
 
    public:
 	virtual ~Value() = default;
