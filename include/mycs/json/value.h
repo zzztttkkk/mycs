@@ -12,6 +12,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "../_utils/index.h"
@@ -75,6 +76,10 @@ class Value {
 	}
 
 	[[nodiscard]] virtual Value* copy() const = 0;
+
+	typedef std::variant<int, std::string, const char*> PathItem;
+
+	[[nodiscard]] const Value* peek(const std::vector<typename Value::PathItem>& path) const;
 
 #define MakeJsonValueTypeCastMethod(T, n)                                                          \
 	[[nodiscard]] virtual const T& n() const { throw std::runtime_error("bad json value type"); }; \
@@ -397,38 +402,5 @@ class NullBoolNew {
 static NullValue* const Null = NullBoolNew::none();			  // NOLINT
 static BoolValue* const True = NullBoolNew::boolean(true);	  // NOLINT
 static BoolValue* const False = NullBoolNew::boolean(false);  // NOLINT
-
-namespace {
-template <typename T>
-class Peeker {
-   public:
-	template <typename = std::enable_if<std::is_integral<T>::value>>
-	inline const Value* peek(const Value* src, T idx) {
-		if (src->type() != Type::Array) return nullptr;
-		auto& av = src->array();
-		return av.at(static_cast<size_t>(idx));
-	}
-
-	inline const Value* peek(const Value* src, const char* key) {
-		if (src->type() != Type::Map) return nullptr;
-		auto& mv = src->map();
-		return mv.get(key);
-	}
-
-	inline const Value* peek(const Value* src, const std::string& key) { return peek(src, key.c_str()); }
-};
-
-template <typename T>
-[[nodiscard]] inline const Value* peek(const Value* src, T key) {
-	return Peeker<T>().peek(src, key);
-}
-}  // namespace
-
-template <typename T, typename... Args>
-[[nodiscard]] const Value* peek(const Value* src, T key, Args&&... args) {
-	auto ptr = peek(src, key);
-	if (ptr == nullptr) return nullptr;
-	return peek(ptr, std::forward<Args>(args)...);
-}
 
 }  // namespace mycs::json

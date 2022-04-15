@@ -20,7 +20,7 @@ int main() {
 	encoder.encode(mv);
 	std::cout << std::endl;
 
-	auto obj = peek(&mv, "c", 1);
+	auto obj = mv.peek({"c", 1});
 	Fmtp("{}\r\n", obj == False);
 	return 0;
 }
