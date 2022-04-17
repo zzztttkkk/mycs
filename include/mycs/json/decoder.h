@@ -118,6 +118,7 @@ class Decoder {
 		tempislocked = false;
 		_result = nullptr;
 		instring = false;
+		isstring = false;
 		unicodestatus = 0;
 		lastpopedisacontainer = false;
 		row = 0;
@@ -135,7 +136,7 @@ class Decoder {
 		}
 
 		if (std::iswspace(c)) {
-			if (!tempislocked && !temp.empty()) temp.push_back(c);
+			if (!tempislocked && (!temp.empty() || instring)) temp.push_back(c);
 			return true;
 		}
 
@@ -149,6 +150,12 @@ class Decoder {
 						unicodestatus++;
 						return true;
 					}
+					case 'b':
+					case 'f':
+					case 'n':
+					case 'r':
+					case 't':
+					case '/':
 					case '"':
 					case '\\': {
 						temp.push_back(c);

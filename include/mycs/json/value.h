@@ -200,9 +200,7 @@ class ArrayValue : public Value {
 
    public:
 	ArrayValue() : Value(Type::Array) {}
-	~ArrayValue() override {
-		for (auto item : _data) Value::free_value(item);
-	}
+	~ArrayValue() override { clear(); }
 
 	[[nodiscard]] const ArrayValue& array() const override { return *this; }
 	ArrayValue& array() override { return *this; }
@@ -311,9 +309,7 @@ class MapValue : public Value {
 
    public:
 	MapValue() : Value(Type::Map) {}
-	~MapValue() override {
-		for (const auto& pair : _data) Value::free_value(pair.second);
-	}
+	~MapValue() override { clear(); }
 
 	[[nodiscard]] const MapValue& map() const override { return *this; }
 	MapValue& map() override { return *this; }
