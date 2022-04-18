@@ -9,9 +9,7 @@ using namespace mycs;
 int main() {
 	algs::Drray<int> drray({1, 2, 3});
 
-	drray.reserve(200);
-	drray.shrink_to_fit();
-
-	Fmtp("{}\r\n", drray.size());
+	drray.push_back(12);
+	drray.push_back(15);
 	return 0;
 }
