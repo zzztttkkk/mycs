@@ -8,6 +8,10 @@
 
 #include "./value.h"
 
+#ifndef MYCS_JSON_ENCODER_WBUF_CAP
+#define MYCS_JSON_ENCODER_WBUF_CAP 2048
+#endif
+
 namespace mycs::json {
 
 class Encoder {
@@ -46,17 +50,24 @@ class Encoder {
 	bool encode_map(const MapValue& mv);
 
 	inline bool write(const char* d, size_t s) {
+		if (wbuf.size() + s > MYCS_JSON_ENCODER_WBUF_CAP) {
+			flush();
+			if (s > (MYCS_JSON_ENCODER_WBUF_CAP >> 2)) {
+				ostream->write(d, static_cast<std::streamsize>(s));
+				return ostream->exceptions() == 0;
+			}
+		}
 		wbuf.append(d, s);
 		return flush();
 	}
 
 	inline bool write(char c) {
 		wbuf.push_back(c);
-		return flush();
+		return true;
 	}
 
 	inline bool flush() {
-		if (wbuf.size() < 1024) return true;
+		if (wbuf.size() < MYCS_JSON_ENCODER_WBUF_CAP) return true;
 		ostream->write(wbuf.c_str(), static_cast<std::streamsize>(wbuf.size()));
 		wbuf.clear();
 		return ostream->exceptions() == 0;
