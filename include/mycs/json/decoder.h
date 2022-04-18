@@ -135,7 +135,7 @@ class Decoder {
 			col++;
 		}
 
-		if (std::iswspace(c)) {
+		if (std::iswspace(c)) {	 // it is allowed multi-line string, I think this is a feature.
 			if (!tempislocked && (!temp.empty() || instring)) temp.push_back(c);
 			return true;
 		}
