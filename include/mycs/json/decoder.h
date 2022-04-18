@@ -109,7 +109,7 @@ class Decoder {
    public:
 	Decoder() = default;
 
-	virtual ~Decoder() { free_stack(); }
+	virtual ~Decoder() { clear(); }
 
 	void clear() {
 		free_stack();
@@ -150,12 +150,6 @@ class Decoder {
 						unicodestatus++;
 						return true;
 					}
-					case 'b':
-					case 'f':
-					case 'n':
-					case 'r':
-					case 't':
-					case '/':
 					case '"':
 					case '\\': {
 						temp.push_back(c);

@@ -10,7 +10,7 @@ using namespace mycs;
 int main() {
 	json::Decoder decoder;
 
-	auto result = decoder.decode(R"("	r\\n\/")");
+	auto result = decoder.decode("\"\n\"");
 	if (result != nullptr) {
 		json::Encoder encoder(std::cout);
 		encoder.encode(result);
