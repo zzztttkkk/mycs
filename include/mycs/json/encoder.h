@@ -73,13 +73,7 @@ class Encoder {
 		return ostream->exceptions() == 0;
 	}
 
-   public:
-	explicit Encoder(std::ostream& s, bool sortkey = false) {
-		ostream = &s;
-		this->sortkey = sortkey;
-	}
-
-	bool encode(const Value& val) {
+	bool encode(const Value& val, bool flush) {
 		buf.clear();
 		switch (val.type()) {
 			case Type::String: {
@@ -110,19 +104,28 @@ class Encoder {
 				return false;
 			}
 		}
-		if (!wbuf.empty()) {
+		if (flush && !wbuf.empty()) {
 			ostream->write(wbuf.c_str(), static_cast<std::streamsize>(wbuf.size()));
 			wbuf.clear();
 		}
 		return ostream->exceptions() == 0;
 	}
 
-	bool encode(const Value* val) { return encode(*val); }
+   public:
+	explicit Encoder(std::ostream& s, bool sortkey = false) {
+		ostream = &s;
+		this->sortkey = sortkey;
+	}
 
-	void reset(std::ostream& s) {
+	inline bool encode(const Value& val) { return encode(val, true); }
+
+	inline bool encode(const Value* val) { return encode(*val, true); }
+
+	void clear(std::ostream& _os, bool _sortkey) {
 		buf.clear();
 		wbuf.clear();
-		ostream = &s;
+		ostream = &_os;
+		this->sortkey = _sortkey;
 	}
 };
 

@@ -63,7 +63,7 @@ bool Encoder::encode_array(const ArrayValue& av) {
 	int idx = 0;
 	int lastIdx = static_cast<int>(av.size()) - 1;
 	for (const Value* v : av._data) {
-		encode(*v);
+		if (!encode(*v)) return false;
 		if (idx < lastIdx) write(',');
 		idx++;
 	}
@@ -89,7 +89,7 @@ bool Encoder::encode_map(const MapValue& mv) {
 		for (const auto& pair : sorttemp) {
 			write_string(pair.first->c_str(), pair.first->size());
 			write(':');
-			encode(*pair.second);
+			if (!encode(*pair.second)) return false;
 
 			if (idx < lastIdx) write(',');
 			idx++;
@@ -98,7 +98,7 @@ bool Encoder::encode_map(const MapValue& mv) {
 		for (const auto& pair : mv._data) {
 			write_string(pair.first.c_str(), pair.first.size());
 			write(':');
-			encode(*pair.second);
+			if (!encode(*pair.second)) return false;
 
 			if (idx < lastIdx) write(',');
 			idx++;
