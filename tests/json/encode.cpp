@@ -15,7 +15,7 @@ int main() {
 	av->push(False);
 	av->push(Null);
 	mv.insert("c", av);
-	mv.insert("b", new StringValue("hello"));
+	mv.insert("b", new StringValue("hello\n"));
 
 	encoder.encode(mv);
 	std::cout << std::endl;

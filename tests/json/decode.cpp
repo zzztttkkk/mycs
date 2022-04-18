@@ -2,6 +2,7 @@
 // Created by ztk on 2022/4/17.
 //
 
+#include <fstream>
 #include <iostream>
 #include <mycs.hpp>
 
@@ -9,12 +10,19 @@ using namespace mycs;
 
 int main() {
 	json::Decoder decoder;
+	std::fstream f;
+	f.open("../../../JSONTestSuite/test_parsing/a.json");
 
-	auto result = decoder.decode("\"\n\"");
+	auto result = decoder.decode(f);
 	if (result != nullptr) {
-		json::Encoder encoder(std::cout);
+		std::fstream of;
+		of.open("../../../JSONTestSuite/test_parsing/b.json", std::ios::out);
+		json::Encoder encoder(of);
 		encoder.encode(result);
-		std::cout << std::endl;
+		of.close();
+		if (of.exceptions() != 0) {
+			return 1;
+		}
 	} else {
 		std::cout << decoder.error()->what() << std::endl;
 	}

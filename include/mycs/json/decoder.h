@@ -135,8 +135,23 @@ class Decoder {
 			col++;
 		}
 
-		if (std::iswspace(c)) {	 // it is allowed multi-line string, I think this is a feature.
-			if (!tempislocked && (!temp.empty() || instring)) temp.push_back(c);
+		if (std::iswspace(c)) {
+			if (instring) {
+				switch (c) {
+					case '\f':
+					case '\r':
+					case '\t':
+					case '\b':
+					case '\n': {
+						return false;
+					}
+					default: {
+						temp.push_back(c);
+						return true;
+					}
+				}
+			}
+			if (!tempislocked && !temp.empty()) temp.push_back(c);
 			return true;
 		}
 
@@ -146,10 +161,31 @@ class Decoder {
 			if (escaped) {
 				escaped = false;
 				switch (c) {
+					case 'b': {
+						temp.push_back('\b');
+						return true;
+					}
+					case 'n': {
+						temp.push_back('\n');
+						return true;
+					}
+					case 'f': {
+						temp.push_back('\f');
+						return true;
+					}
+					case 'r': {
+						temp.push_back('\r');
+						return true;
+					}
+					case 't': {
+						temp.push_back('\t');
+						return true;
+					}
 					case 'u': {
 						unicodestatus++;
 						return true;
 					}
+					case '/':
 					case '"':
 					case '\\': {
 						temp.push_back(c);

@@ -38,8 +38,8 @@ int main() {
 	fs::directory_iterator end;
 
 	for (auto iter = fs::directory_iterator(path); iter != end; iter++) {
-		if (iter->path().filename().c_str()[0] != 'y') continue;
-		decode_one(decoder, iter->path(), true);
+		if (iter->path().filename().c_str()[0] != 'n') continue;
+		decode_one(decoder, iter->path(), false);
 	}
 	return 0;
 }

@@ -17,19 +17,50 @@ class Encoder {
    private:
 	std::ostream* ostream = nullptr;
 	std::string buf;
+	std::string wbuf;
 	bool sortkey = false;
 
-	void encode_string(const StringValue& sv);
+	void write_string(const char* p, size_t s);
+
+	void encode_string(const StringValue& sv) { write_string(sv._data.c_str(), sv._data.size()); }
 
 	void encode_number(const NumberValue& nv);
 
-	void encode_null();
+	inline void encode_null() {
+		const static char* none = "null";
+		write(none, 4);
+	}
 
-	void encode_bool(bool v);
+	inline void encode_bool(bool v) {
+		const static char* t = "true";
+		const static char* f = "false";
+		if (v) {
+			write(t, 4);
+		} else {
+			write(f, 5);
+		}
+	}
 
 	bool encode_array(const ArrayValue& av);
 
 	bool encode_map(const MapValue& mv);
+
+	inline bool write(const char* d, size_t s) {
+		wbuf.append(d, s);
+		return flush();
+	}
+
+	inline bool write(char c) {
+		wbuf.push_back(c);
+		return flush();
+	}
+
+	inline bool flush() {
+		if (wbuf.size() < 1024) return true;
+		ostream->write(wbuf.c_str(), static_cast<std::streamsize>(wbuf.size()));
+		wbuf.clear();
+		return ostream->exceptions() == 0;
+	}
 
    public:
 	explicit Encoder(std::ostream& s, bool sortkey = false) {
@@ -68,13 +99,18 @@ class Encoder {
 				return false;
 			}
 		}
-		return true;
+		if (!wbuf.empty()) {
+			ostream->write(wbuf.c_str(), static_cast<std::streamsize>(wbuf.size()));
+			wbuf.clear();
+		}
+		return ostream->exceptions() == 0;
 	}
 
 	bool encode(const Value* val) { return encode(*val); }
 
 	void reset(std::ostream& s) {
 		buf.clear();
+		wbuf.clear();
 		ostream = &s;
 	}
 };
