@@ -164,6 +164,28 @@ class Drray {
 		_size = idx;
 	}
 
+	void emplace(size_t idx, const T& ele) {
+		if (idx >= _size) throw std::runtime_error("algs::Drray, index out of range");
+		_ptr[idx] = ele;
+	}
+
+	template <class... Args>
+	void emplace(size_t idx, Args&&... args) {
+		if (idx >= _size) throw std::runtime_error("algs::Drray, index out of range");
+		_ptr[idx] = T(std::forward<Args>(args)...);
+	}
+
+#define NoArg
+#define MakeFN(cst, fnname, idx) \
+	cst T& fnname() cst { return _ptr[idx]; }
+
+	MakeFN(NoArg, front, 0);
+	MakeFN(const, front, 0);
+	MakeFN(NoArg, back, _size - 1);
+	MakeFN(const, back, _size - 1);
+#undef MakeFN
+#undef NoArg
+
 	Iter begin() { return Iter(this, 0); }
 
 	Iter end() { return Iter(this, _size); }

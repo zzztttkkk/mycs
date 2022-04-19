@@ -11,5 +11,11 @@ int main() {
 
 	drray.push_back(12);
 	drray.push_back(15);
+	drray.emplace(1, 344);
+
+	for (auto& item : drray) {
+		Fmtp("{},", item);
+	}
+	Fmtp("\r\n{} {}\r\n", drray.front(), drray.back());
 	return 0;
 }
