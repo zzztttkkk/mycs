@@ -18,6 +18,8 @@ class Hashmap {
 
 	void insert(const K& key, const V& val);
 
+	void insert(const std::pair<const K&, const V&>& pair) { this->insert(pair.first, pair.second); }
+
 	std::optional<V*> find(const K& key);
 
 	std::optional<const V*> find(const K& key) const;
