@@ -11,7 +11,8 @@ using namespace mycs;
 int main() {
 	json::Decoder decoder;
 	std::fstream f;
-	f.open("../../../JSONTestSuite/test_parsing/a.json");
+	f.open("../../../JSONTestSuite/test_parsing/a.json", std::ios::in);
+	if (!f) return f.exceptions();
 
 	auto result = decoder.decode(f);
 	if (result != nullptr) {
