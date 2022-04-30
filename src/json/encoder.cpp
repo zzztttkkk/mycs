@@ -55,7 +55,7 @@ void Encoder::encode_number(const NumberValue& nv) {
 	} else {
 		buf = std::to_string(nv._data);
 	}
-	ostream->write(buf.c_str(), static_cast<std::streamsize>(buf.size()));
+	write(buf.c_str(), static_cast<std::streamsize>(buf.size()));
 }
 
 bool Encoder::encode_array(const ArrayValue& av) {
